@@ -58,4 +58,10 @@ public class TokenService {
     private Instant dataExpiracao() {
         return LocalDateTime.now().plusHours(2).toInstant(ZoneOffset.of("-03:00"));
     }
+
+    // src/main/java/com/wells/recruiting/platform/recruiting/platform/security/TokenService.java
+    public String getEmailFromToken(String tokenJWT) {
+        return getSubject(tokenJWT);
+    }
+
 }

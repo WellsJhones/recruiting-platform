@@ -57,11 +57,11 @@ public class User implements UserDetails {
         return _id;
     }
 
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role));
     }
-
 
     @Override
     public String getPassword() {
