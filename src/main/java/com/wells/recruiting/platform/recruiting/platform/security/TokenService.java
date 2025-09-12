@@ -5,16 +5,14 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
 import com.wells.recruiting.platform.recruiting.platform.user.User;
-import org.springframework.beans.factory.annotation.Value;
+import com.wells.recruiting.platform.recruiting.platform.company.Employer;
 import org.springframework.stereotype.Service;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 
-
 @Service
 public class TokenService {
-    // inviroment variable
     private String secret = "mysecret123456789012345678901234";
 
     public String generateToken(User usuario) {
@@ -23,6 +21,21 @@ public class TokenService {
             return JWT.create()
                     .withIssuer("API Recruiting Platform")
                     .withSubject(usuario.getEmail())
+                    .withExpiresAt(dataExpiracao())
+                    .sign(algoritmo);
+
+        } catch (Exception e) {
+            throw new RuntimeException("erro ao gerar token jwt " + e);
+        }
+    }
+
+    // Overload for Employer
+    public String generateToken(Employer employer) {
+        try {
+            var algoritmo = Algorithm.HMAC256(secret);
+            return JWT.create()
+                    .withIssuer("API Recruiting Platform")
+                    .withSubject(employer.getEmail())
                     .withExpiresAt(dataExpiracao())
                     .sign(algoritmo);
 
