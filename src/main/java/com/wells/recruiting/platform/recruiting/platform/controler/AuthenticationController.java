@@ -33,21 +33,21 @@ public class AuthenticationController {
     @Autowired
     private EmployerRepository employerRepository;
 
-
-    // Java
     @PostMapping
-    public ResponseEntity login(@RequestBody @Valid DataAuthentication dados) {
+    public ResponseEntity<?> login(@RequestBody @Valid DataAuthentication dados) {
         User user = userRepository.findByEmail(dados.email());
         if (user != null) {
             if (!passwordEncoder.matches(dados.password(), user.getPassword())) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
             String tokenJWT = tokenService.generateToken(user);
-            DataLoginResponse response = new DataLoginResponse(
-                    user.get_id(),
+            UserFullDTO response = new UserFullDTO(
+                    String.valueOf(user.get_id()),
                     user.getName(),
                     user.getEmail(),
                     user.getRole(),
+                    user.getAvatar(),
+                    user.getResume(),
                     tokenJWT
             );
             return ResponseEntity.ok(response);
@@ -59,11 +59,12 @@ public class AuthenticationController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
             String tokenJWT = tokenService.generateToken(employer);
-            DataLoginResponseEmployer response = new DataLoginResponseEmployer(
-                    employer.get_id(),
+            EmployerFullDTO response = new EmployerFullDTO(
+                    String.valueOf( employer.get_id() ),
                     employer.getName(),
                     employer.getEmail(),
                     employer.getRole(),
+                    employer.getAvatar(),
                     employer.getCompanyName(),
                     employer.getCompanyDescription(),
                     employer.getCompanyLogo(),
@@ -74,5 +75,6 @@ public class AuthenticationController {
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
+
 
 }

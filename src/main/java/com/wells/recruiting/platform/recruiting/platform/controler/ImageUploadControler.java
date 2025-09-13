@@ -39,7 +39,7 @@ public class ImageUploadControler {
 
         try {
             file.transferTo(dest);
-            String imageUrl = "file:///C:/Users/Wells/Documents/uploads/" + fileName;
+            String imageUrl = "http://localhost:8000/uploads/" + fileName;
             return ResponseEntity.ok(java.util.Map.of("imageUrl", imageUrl));
 
         } catch (IOException e) {

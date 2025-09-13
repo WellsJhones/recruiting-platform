@@ -51,6 +51,15 @@ public class User implements UserDetails {
         this.resume = "";
     }
 
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = Instant.now();

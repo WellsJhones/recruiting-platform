@@ -9,7 +9,8 @@ public record DataDetailsEmployer(
         String role,
         String companyName,
         String companyDescription,
-        String companyLogo
+        String companyLogo,
+        String avatar
 ) {
     public DataDetailsEmployer(Employer employer) {
         this(
@@ -19,7 +20,8 @@ public record DataDetailsEmployer(
                 employer.getRole(),
                 employer.getCompanyName(),
                 employer.getCompanyDescription(),
-                employer.getCompanyLogo()
+                employer.getCompanyLogo(),
+                employer.getAvatar()
         );
     }
 }
