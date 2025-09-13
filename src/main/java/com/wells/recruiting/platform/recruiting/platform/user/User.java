@@ -1,7 +1,7 @@
+// src/main/java/com/wells/recruiting/platform/recruiting/platform/user/User.java
 package com.wells.recruiting.platform.recruiting.platform.user;
 
 import com.wells.recruiting.platform.recruiting.platform.dto.UserCreateData;
-
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -30,11 +30,15 @@ public class User implements UserDetails {
     private String avatar;
     private boolean active = true;
     private String role;
+
+    @Column(name = "created_at", nullable = false)
     private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
     private int version;
     private String resume;
-
 
     public User(UserCreateData data) {
         this.active = true;
@@ -43,10 +47,19 @@ public class User implements UserDetails {
         this.password = data.password();
         this.avatar = "";
         this.role = data.role();
-        this.createdAt = Instant.now();
-        this.updatedAt = Instant.now();
         this.version = 0;
         this.resume = "";
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = Instant.now();
     }
 
     @Override
@@ -65,7 +78,6 @@ public class User implements UserDetails {
     public Long getId() {
         return _id;
     }
-
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -101,6 +113,4 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
-
 }
-
