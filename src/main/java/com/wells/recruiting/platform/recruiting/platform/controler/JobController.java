@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class JobController {
 
     @Autowired
-    private JobRepository jobRepository;
+    private JobRepository<Job, Long> jobRepository;
     @Autowired
     private EmployerRepository employerRepository;
     @Autowired
@@ -91,6 +91,22 @@ public class JobController {
         }
         return ResponseEntity.ok(mapToResponseDTO(job));
     }
+
+    @GetMapping("/get-jobs-employer")
+    @PreAuthorize("hasRole('EMPLOYER')")
+    public ResponseEntity<List<JobResponseDTO>> getJobsByEmployerToken(@RequestHeader("Authorization") String token) {
+        String email = tokenService.getEmailFromToken(token.replace("Bearer ", ""));
+        var employer = employerRepository.findByEmail(email);
+        if (employer == null) {
+            return ResponseEntity.status(403).build();
+        }
+        List<Job> jobs = jobRepository.findByEmployerId(employer.getId());
+        List<JobResponseDTO> jobDTOs = jobs.stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(jobDTOs);
+    }
+
 
 
 }

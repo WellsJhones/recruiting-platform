@@ -13,7 +13,7 @@ import java.util.*;
 @RequestMapping("/api/analytics/overview")
 public class AnalyticsController {
     @Autowired
-    private JobRepository jobRepository;
+    private JobRepository<Job, Long> jobRepository;
     @GetMapping
     public ResponseEntity<Object> getOverview(
             @RequestHeader(value = "Authorization", required = false) String token
