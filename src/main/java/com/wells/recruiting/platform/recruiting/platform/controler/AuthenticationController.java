@@ -2,10 +2,7 @@
 package com.wells.recruiting.platform.recruiting.platform.controler;
 
 import com.wells.recruiting.platform.recruiting.platform.company.Employer;
-import com.wells.recruiting.platform.recruiting.platform.dto.DataAuthentication;
-import com.wells.recruiting.platform.recruiting.platform.dto.DataDetailsUser;
-import com.wells.recruiting.platform.recruiting.platform.dto.DataLoginResponse;
-import com.wells.recruiting.platform.recruiting.platform.dto.DataLoginResponseEmployer;
+import com.wells.recruiting.platform.recruiting.platform.dto.*;
 import com.wells.recruiting.platform.recruiting.platform.repository.EmployerRepository;
 import com.wells.recruiting.platform.recruiting.platform.repository.UserRepository;
 import com.wells.recruiting.platform.recruiting.platform.security.DataTokenJWT;
@@ -17,12 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = "*") // or specify allowed origins
 @RestController
@@ -82,6 +74,5 @@ public class AuthenticationController {
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
-
 
 }

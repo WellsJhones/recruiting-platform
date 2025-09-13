@@ -5,10 +5,12 @@ import com.wells.recruiting.platform.recruiting.platform.company.Employer;
 import com.wells.recruiting.platform.recruiting.platform.dto.*;
 import com.wells.recruiting.platform.recruiting.platform.repository.EmployerRepository;
 import com.wells.recruiting.platform.recruiting.platform.repository.UserRepository;
+import com.wells.recruiting.platform.recruiting.platform.security.DataTokenJWT;
 import com.wells.recruiting.platform.recruiting.platform.security.TokenService;
 import com.wells.recruiting.platform.recruiting.platform.user.User;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
@@ -102,4 +104,42 @@ public class UserControler {
             return ResponseEntity.badRequest().body("Invalid role");
         }
     }
+
+    // Java
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = tokenService.extractEmail(token);
+        String role = tokenService.extractRole(token); // Add this method to TokenService
+
+        System.out.println("Extracted email: " + email);
+        System.out.println("Extracted role: " + role);
+
+        if ("employer".equalsIgnoreCase(role)) {
+            Employer employer = employerRepository.findByEmail(email);
+            System.out.println("Employer found: " + (employer != null));
+            if (employer != null) {
+                DataDetailsEmployer response = new DataDetailsEmployer(
+                        employer.get_id(),
+                        employer.getName(),
+                        employer.getEmail(),
+                        employer.getRole(),
+                        employer.getCompanyName(),
+                        employer.getCompanyDescription(),
+                        employer.getCompanyLogo()
+                );
+                return ResponseEntity.ok(response);
+            }
+        } else if ("jobseeker".equalsIgnoreCase(role)) {
+            User user = repository.findByEmail(email);
+            System.out.println("User found: " + (user != null));
+            if (user != null) {
+                DataDetailsUser response = new DataDetailsUser(user);
+                return ResponseEntity.ok(response);
+            }
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+
 }

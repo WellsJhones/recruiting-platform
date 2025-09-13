@@ -8,6 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
@@ -29,6 +30,10 @@ public class User implements UserDetails {
     private String avatar;
     private boolean active = true;
     private String role;
+    private Instant createdAt;
+    private Instant updatedAt;
+    private int version;
+    private String resume;
 
 
     public User(UserCreateData data) {
@@ -38,6 +43,10 @@ public class User implements UserDetails {
         this.password = data.password();
         this.avatar = "";
         this.role = data.role();
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
+        this.version = 0;
+        this.resume = "";
     }
 
     @Override

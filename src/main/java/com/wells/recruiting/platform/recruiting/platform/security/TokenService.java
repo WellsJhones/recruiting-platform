@@ -16,12 +16,13 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 public class TokenService {
     private String secret = "mysecret123456789012345678901234";
 
-    public String generateToken(User usuario) {
+    public String generateToken(User user) {
         try {
             var algoritmo = Algorithm.HMAC256(secret);
             return JWT.create()
                     .withIssuer("API Recruiting Platform")
-                    .withSubject(usuario.getEmail())
+                    .withSubject(user.getEmail())
+                    .withClaim("role", user.getRole()) // Add this line
                     .withExpiresAt(dataExpiracao())
                     .sign(algoritmo);
 
@@ -29,6 +30,7 @@ public class TokenService {
             throw new RuntimeException("erro ao gerar token jwt " + e);
         }
     }
+
 
     // Overload for Employer, now includes role claim
     public String generateToken(Employer employer) {
@@ -58,7 +60,7 @@ public class TokenService {
     }
 
     private Instant dataExpiracao() {
-        return LocalDateTime.now().plusHours(2).toInstant(ZoneOffset.of("-03:00"));
+        return LocalDateTime.now().plusHours(200).toInstant(ZoneOffset.of("-03:00"));
     }
 
     public String getEmailFromToken(String tokenJWT) {
@@ -75,5 +77,13 @@ public class TokenService {
         } catch (Exception e) {
             throw new RuntimeException("erro ao obter role do token jwt " + e);
         }
+    }
+
+    public String extractEmail(String token) {
+        return getSubject(token);
+    }
+
+    public String extractRole(String token) {
+        return getRoleFromToken(token);
     }
 }
