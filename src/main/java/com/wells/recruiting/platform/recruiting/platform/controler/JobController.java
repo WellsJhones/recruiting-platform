@@ -91,6 +91,38 @@ public class JobController {
         }
         return ResponseEntity.ok(mapToResponseDTO(job));
     }
+// src/main/java/com/wells/recruiting/platform/recruiting/platform/controler/JobController.java
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('EMPLOYER')")
+    public ResponseEntity<JobResponseDTO> updateJob(
+            @PathVariable("id") Long id,
+            @RequestBody JobRequest jobRequest,
+            @RequestHeader("Authorization") String token) {
+        String email = tokenService.getEmailFromToken(token.replace("Bearer ", ""));
+        var employer = employerRepository.findByEmail(email);
+        if (employer == null) {
+            return ResponseEntity.status(403).build();
+        }
+        Job job = jobRepository.findById(id).orElse(null);
+        if (job == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!job.getEmployer().getId().equals(employer.getId())) {
+            return ResponseEntity.status(403).build();
+        }
+        job.setTitle(jobRequest.title);
+        job.setDescription(jobRequest.description);
+        job.setRequirements(jobRequest.requirements);
+        job.setLocation(jobRequest.location);
+        job.setCategory(jobRequest.category);
+        job.setType(jobRequest.type);
+        job.setSalaryMin(jobRequest.salaryMin);
+        job.setSalaryMax(jobRequest.salaryMax);
+        jobRepository.save(job);
+        return ResponseEntity.ok(mapToResponseDTO(job));
+    }
+
 
     @GetMapping("/get-jobs-employer")
     @PreAuthorize("hasRole('EMPLOYER')")
