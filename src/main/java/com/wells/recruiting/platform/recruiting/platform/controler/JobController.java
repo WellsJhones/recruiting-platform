@@ -49,7 +49,7 @@ public class JobController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('jobseeker')")
     public List<JobResponseDTO> getOpenJobs() {
         return jobRepository.findByIsClosedFalse()
                 .stream()
@@ -83,7 +83,7 @@ public class JobController {
         return dto;
     }
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('jobseeker')")
     public ResponseEntity<JobResponseDTO> getJobById(@PathVariable("id") Long id) {
         Job job = jobRepository.findById(id).orElse(null);
         if (job == null) {
