@@ -31,6 +31,11 @@ public class Job {
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    public boolean isClosed() {
+        return Boolean.TRUE.equals(isClosed);
+    }
+
+
 
     @ManyToOne
     @JoinColumn(name = "employer_id")

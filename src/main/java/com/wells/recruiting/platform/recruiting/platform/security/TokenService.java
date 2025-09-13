@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.DecodedJWT;
 
 @Service
 public class TokenService {
@@ -29,13 +30,14 @@ public class TokenService {
         }
     }
 
-    // Overload for Employer
+    // Overload for Employer, now includes role claim
     public String generateToken(Employer employer) {
         try {
             var algoritmo = Algorithm.HMAC256(secret);
             return JWT.create()
                     .withIssuer("API Recruiting Platform")
                     .withSubject(employer.getEmail())
+                    .withClaim("role", employer.getRole())
                     .withExpiresAt(dataExpiracao())
                     .sign(algoritmo);
 
@@ -59,9 +61,19 @@ public class TokenService {
         return LocalDateTime.now().plusHours(2).toInstant(ZoneOffset.of("-03:00"));
     }
 
-    // src/main/java/com/wells/recruiting/platform/recruiting/platform/security/TokenService.java
     public String getEmailFromToken(String tokenJWT) {
         return getSubject(tokenJWT);
     }
 
+    // New: Get role from token
+    public String getRoleFromToken(String tokenJWT) {
+        try {
+            var algoritmo = Algorithm.HMAC256(secret);
+            var verifier = JWT.require(algoritmo).build();
+            DecodedJWT jwt = verifier.verify(tokenJWT);
+            return jwt.getClaim("role").asString();
+        } catch (Exception e) {
+            throw new RuntimeException("erro ao obter role do token jwt " + e);
+        }
+    }
 }

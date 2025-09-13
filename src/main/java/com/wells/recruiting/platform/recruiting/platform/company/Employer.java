@@ -38,12 +38,13 @@ public class Employer implements UserDetails {
         this.name = data.name();
         this.email = data.email();
         this.password = data.password();
-        this.avatar = "";
+        this.avatar = data.avatar() != null ? data.avatar() : "";
         this.role = data.role();
-        this.companyName = data.companyName();
-        this.companyDescription = data.companyDescription();
-        this.companyLogo = data.companyLogo();
+        this.companyName = data.companyName() != null ? data.companyName() : "Unknown Company";
+        this.companyDescription = data.companyDescription() != null ? data.companyDescription() : "";
+        this.companyLogo = data.companyLogo() != null ? data.companyLogo() : "";
     }
+
 
     @Override
     public String toString() {

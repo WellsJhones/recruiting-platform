@@ -49,7 +49,7 @@ public class UserControler {
         }
 
         if ("employer".equalsIgnoreCase(role)) {
-            if (data.getCompanyName() == null || data.getName() == null) {
+            if (data.getName() == null) {
                 return ResponseEntity.badRequest().body("Missing employer fields");
             }
             Employer employer = new Employer();
@@ -62,17 +62,22 @@ public class UserControler {
             employer.setRole(role);
             employerRepository.save(employer);
 
-            String tokenJWT = tokenService.generateToken( employer);
+            String companyName = employer.getCompanyName() != null ? employer.getCompanyName() : "Unknown Company";
+            String companyDescription = employer.getCompanyDescription() != null ? employer.getCompanyDescription() : "";
+            String companyLogo = employer.getCompanyLogo() != null ? employer.getCompanyLogo() : "";
+
+            String tokenJWT = tokenService.generateToken(employer);
             DataLoginResponseEmployer response = new DataLoginResponseEmployer(
                     employer.get_id(),
                     employer.getName(),
                     employer.getEmail(),
                     employer.getRole(),
-                    employer.getCompanyName(),
-                    employer.getCompanyDescription(),
-                    employer.getCompanyLogo(),
+                    companyName,
+                    companyDescription,
+                    companyLogo,
                     tokenJWT
             );
+
             return ResponseEntity.ok(response);
         } else if ("jobseeker".equalsIgnoreCase(role)) {
             if (data.getName() == null) {

@@ -11,6 +11,7 @@ public record EmployerDataCreate(
         @NotNull String role,
         String companyName,
         String companyDescription,
-        String companyLogo
+        String companyLogo,
+        String avatar
 ) {
 }

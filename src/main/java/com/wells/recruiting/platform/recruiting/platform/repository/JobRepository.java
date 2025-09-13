@@ -8,4 +8,5 @@ import java.util.List;
 public interface JobRepository extends JpaRepository<Job, Long> {
     List<Job> findByIsClosedFalse();
 
+    List<Job> findTop5ByOrderByCreatedAtDesc();
 }
