@@ -140,5 +140,28 @@ public class JobController {
     }
 
 
+    @PutMapping("/{id}/toggle-close")
+    @PreAuthorize("hasRole('EMPLOYER')")
+    public ResponseEntity<JobResponseDTO> toggleJobClosed(
+            @PathVariable("id") Long id,
+            @RequestHeader("Authorization") String token) {
+        String email = tokenService.getEmailFromToken(token.replace("Bearer ", ""));
+        var employer = employerRepository.findByEmail(email);
+        if (employer == null) {
+            return ResponseEntity.status(403).build();
+        }
+        Job job = jobRepository.findById(id).orElse(null);
+        if (job == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!job.getEmployer().getId().equals(employer.getId())) {
+            return ResponseEntity.status(403).build();
+        }
+        job.setIsClosed(!job.getIsClosed()); // Toggle the closed status
+        jobRepository.save(job);
+        return ResponseEntity.ok(mapToResponseDTO(job));
+    }
+
+
 
 }
