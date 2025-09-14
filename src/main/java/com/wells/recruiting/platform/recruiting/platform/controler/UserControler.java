@@ -19,7 +19,7 @@ import java.io.IOException;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api")
 public class UserControler {
 
     @Autowired
@@ -31,7 +31,7 @@ public class UserControler {
     @Autowired
     private EmployerRepository employerRepository;
 
-    @PostMapping("/register")
+    @PostMapping("/auth/register")
     @Transactional
     public ResponseEntity<Object> registerUser(
             @RequestParam("name") String name,
@@ -115,7 +115,7 @@ public class UserControler {
         }
     }
 
-    @GetMapping("/me")
+    @GetMapping("/auth/me")
     public ResponseEntity<?> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
         String email = tokenService.extractEmail(token);
@@ -146,4 +146,34 @@ public class UserControler {
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
+    @GetMapping("/user/{id}")
+    public ResponseEntity<?> getPublicUserInfo(@PathVariable("id") String id) {
+        try {
+            Long longId = Long.parseLong(id);
+            User user = repository.findById(longId).orElse(null);
+            if (user != null) {
+                DataDetailsUser response = new DataDetailsUser(user);
+                return ResponseEntity.ok(response);
+            }
+            Employer employer = employerRepository.findById(longId).orElse(null);
+            if (employer != null) {
+                DataDetailsEmployer response = new DataDetailsEmployer(
+                        employer.get_id(),
+                        employer.getName(),
+                        employer.getEmail(),
+                        employer.getRole(),
+                        employer.getCompanyName(),
+                        employer.getCompanyDescription(),
+                        employer.getCompanyLogo(),
+                        employer.getAvatar()
+                );
+                return ResponseEntity.ok(response);
+            }
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body("Invalid user ID format");
+        }
+    }
+
+
 }

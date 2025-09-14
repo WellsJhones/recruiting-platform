@@ -37,7 +37,7 @@ public class User implements UserDetails {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    private int version;
+    private Integer version;
     private String resume;
 
     public User(UserCreateData data) {

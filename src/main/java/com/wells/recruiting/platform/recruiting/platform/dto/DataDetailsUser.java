@@ -1,10 +1,8 @@
 package com.wells.recruiting.platform.recruiting.platform.dto;
 
 import com.wells.recruiting.platform.recruiting.platform.user.User;
-
 import java.time.Instant;
 
-// Java
 public record DataDetailsUser(
         String _id,
         String name,
@@ -26,7 +24,7 @@ public record DataDetailsUser(
                 user.getAvatar(),
                 user.getCreatedAt(),
                 user.getUpdatedAt(),
-                user.getVersion(),
+                user.getVersion() != null ? user.getVersion() : 0, // Use 0 if null
                 user.getResume()
         );
     }
