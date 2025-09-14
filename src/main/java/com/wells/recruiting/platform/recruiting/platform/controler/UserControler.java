@@ -108,6 +108,7 @@ public class UserControler {
             String tokenJWT = tokenService.generateToken(user);
             DataLoginResponse response = new DataLoginResponse(
                     user.get_id(),
+                    user.getAvatar(),
                     user.getName(),
                     user.getEmail(),
                     user.getRole(),
