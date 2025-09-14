@@ -1,6 +1,6 @@
 package com.wells.recruiting.platform.recruiting.platform.dto;
 
-import com.wells.recruiting.platform.recruiting.platform.model.ApplicationStatus;
+import com.wells.recruiting.platform.recruiting.platform.model.Status;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import lombok.Getter;
@@ -16,7 +16,7 @@ public class ApplicationDTO {
     private String createdAt;
     private String updatedAt;
     @Enumerated(EnumType.STRING)
-    private ApplicationStatus status = ApplicationStatus.APPLIED;
+    private Status status = Status.APPLIED;
 
 
     private int __v = 0; // Optional, for versioning

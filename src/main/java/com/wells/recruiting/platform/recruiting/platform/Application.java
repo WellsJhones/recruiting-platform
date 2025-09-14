@@ -1,6 +1,7 @@
 package com.wells.recruiting.platform.recruiting.platform;
 
 import com.wells.recruiting.platform.recruiting.platform.job.Job;
+import com.wells.recruiting.platform.recruiting.platform.model.Status;
 import com.wells.recruiting.platform.recruiting.platform.user.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -23,8 +24,10 @@ public class Application {
     @ManyToOne
     @JoinColumn(name = "applicant_id")
     private User applicant;
+    // Possible values: "APPLIED", "IN_REVIEW", "REJECTED", "ACCEPTED"
+    @Enumerated(EnumType.STRING)
+    private Status status;
 
-    private String status;
 
     private Instant createdAt;
     private Instant updatedAt;
@@ -38,5 +41,6 @@ public class Application {
     protected void onUpdate() {
         updatedAt = Instant.now();
     }
+
 
 }

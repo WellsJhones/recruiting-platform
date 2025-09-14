@@ -14,6 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.wells.recruiting.platform.recruiting.platform.user.User;
+import com.wells.recruiting.platform.recruiting.platform.Application;
+import com.wells.recruiting.platform.recruiting.platform.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
+
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,7 +33,8 @@ public class JobController {
     private EmployerRepository employerRepository;
     @Autowired
     private TokenService tokenService;
-
+    @Autowired
+    private UserRepository userRepository;
     @Autowired
     private ApplicationRepository applicationRepository;
 
@@ -54,18 +60,24 @@ public class JobController {
         return ResponseEntity.ok(mapToResponseDTO(job));
     }
 
+
     @GetMapping
     @PreAuthorize("hasRole('jobseeker')")
-    public List<JobResponseDTO> getOpenJobs() {
-        return jobRepository.findByIsClosedFalse()
-                .stream()
-                .map(this::mapToResponseDTO)
+    public ResponseEntity<List<JobResponseDTO>> getOpenJobs(@RequestHeader("Authorization") String token) {
+        String email = tokenService.getEmailFromToken(token.replace("Bearer ", ""));
+        User user = userRepository.findByEmail(email);
+        List<Job> jobs = jobRepository.findByIsClosedFalse();
+        List<JobResponseDTO> jobDTOs = jobs.stream()
+                .map(job -> mapToResponseDTO(job, user))
                 .collect(Collectors.toList());
+        return ResponseEntity.ok(jobDTOs);
     }
 
-    private JobResponseDTO mapToResponseDTO(Job job) {
+
+    // Overload mapToResponseDTO to accept User
+    private JobResponseDTO mapToResponseDTO(Job job, User user) {
         JobResponseDTO dto = new JobResponseDTO();
-        dto.set_id(job.get_id().toString()); // Use correct getter for ID
+        dto.set_id(job.get_id().toString());
         dto.setTitle(job.getTitle());
         dto.setDescription(job.getDescription());
         dto.setRequirements(job.getRequirements());
@@ -75,20 +87,33 @@ public class JobController {
         dto.setSalaryMax(job.getSalaryMax());
         dto.setIsClosed(job.getIsClosed());
         dto.setIsSaved(job.getIsSaved());
-        dto.setApplicationStatus(job.getApplicationStatus());
         dto.setCreatedAt(job.getCreatedAt() != null ? job.getCreatedAt().toString() : null);
         dto.setUpdatedAt(job.getUpdatedAt() != null ? job.getUpdatedAt().toString() : null);
 
+        // Company info
         CompanyDTO company = new CompanyDTO();
-        company.set_id(job.getEmployer().getId().toString()); // Use correct getter for ID
+        company.set_id(job.getEmployer().getId().toString());
         company.setName(job.getEmployer().getName());
         company.setCompanyLogo(job.getEmployer().getCompanyLogo());
         company.setCompanyName(job.getEmployer().getCompanyName());
         dto.setCompany(company);
+
         int count = applicationRepository.countByJob__id(job.get_id());
         dto.setApplicationCount(count);
 
+        // Set applicationStatus for current user
+        Application app = applicationRepository.findByJob__idAndApplicant__id(job.get_id(), user != null ? user.get_id() : null);
+        String applicationStatus = null;
+        if (app != null && app.getStatus() != null) {
+            applicationStatus = app.getStatus().name().replace("_", " ");
+        }
+        dto.setApplicationStatus(applicationStatus);
+
+
         return dto;
+    }
+    private JobResponseDTO mapToResponseDTO(Job job) {
+        return mapToResponseDTO(job, null);
     }
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('jobseeker')")
@@ -99,7 +124,6 @@ public class JobController {
         }
         return ResponseEntity.ok(mapToResponseDTO(job));
     }
-// src/main/java/com/wells/recruiting/platform/recruiting/platform/controler/JobController.java
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('EMPLOYER')")
@@ -143,7 +167,9 @@ public class JobController {
         List<Job> jobs = jobRepository.findByEmployerId(employer.getId());
         List<JobResponseDTO> jobDTOs = jobs.stream()
                 .map(job -> {
-                    JobResponseDTO dto = mapToResponseDTO(job);
+                    // For employer endpoints
+                    JobResponseDTO dto = mapToResponseDTO(job); // uses the overload, passes null for user
+
                     int count = applicationRepository.countByJob__id(job.get_id());
                     dto.setApplicationCount(count); // Add this setter to your DTO
                     return dto;

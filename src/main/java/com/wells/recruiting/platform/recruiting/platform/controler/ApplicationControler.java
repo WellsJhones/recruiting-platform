@@ -4,7 +4,7 @@ import com.wells.recruiting.platform.recruiting.platform.Application;
 import com.wells.recruiting.platform.recruiting.platform.company.Employer;
 import com.wells.recruiting.platform.recruiting.platform.dto.ApplicationDTO;
 import com.wells.recruiting.platform.recruiting.platform.dto.JobDTO;
-import com.wells.recruiting.platform.recruiting.platform.model.ApplicationStatus;
+import com.wells.recruiting.platform.recruiting.platform.model.Status;
 import com.wells.recruiting.platform.recruiting.platform.repository.ApplicationRepository;
 import com.wells.recruiting.platform.recruiting.platform.repository.EmployerRepository;
 import com.wells.recruiting.platform.recruiting.platform.repository.JobRepository;
@@ -67,7 +67,7 @@ public class ApplicationControler {
         Application application = new Application();
         application.setJob(job);
         application.setApplicant(user);
-
+        application.setStatus(Status.APPLIED);
         applicationRepository.save(application);
 
         // Update application count
@@ -102,7 +102,7 @@ public class ApplicationControler {
             applicantMap.put("email", app.getApplicant().getEmail());
             applicantMap.put("avatar", app.getApplicant().getAvatar());
             dto.setApplicant(applicantMap);
-            dto.setStatus(ApplicationStatus.valueOf(app.getStatus()));
+            dto.setStatus(app.getStatus());
             dto.setCreatedAt(app.getCreatedAt().toString());
             dto.setUpdatedAt(app.getUpdatedAt().toString());
             dto.set__v(0);
@@ -160,9 +160,10 @@ public class ApplicationControler {
 
             dto.setStatus(
                     app.getStatus() != null
-                            ? ApplicationStatus.valueOf(app.getStatus())
-                            : ApplicationStatus.APPLIED
+                            ? app.getStatus()
+                            : Status.APPLIED
             );
+
 
             dto.setCreatedAt(app.getCreatedAt().toString());
             dto.setUpdatedAt(app.getUpdatedAt().toString());
@@ -183,4 +184,44 @@ public class ApplicationControler {
 
         return ResponseEntity.ok(dtos);
     }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<?> updateApplicationStatus(
+            @RequestHeader("Authorization") String token,
+            @PathVariable String id,
+            @RequestBody Map<String, String> payload
+    ) {
+        String email = tokenService.getEmailFromToken(token.replace("Bearer ", ""));
+        Employer employer = employerRepository.findByEmail(email);
+
+        if (employer == null || !"employer".equalsIgnoreCase(employer.getRole())) {
+            return ResponseEntity.status(403).body("Only employer can update status");
+        }
+
+        Application application = applicationRepository.findById(Long.parseLong(id)).orElse(null);
+        if (application == null) {
+            return ResponseEntity.status(404).body("Application not found");
+        }
+
+        if (application.getJob() == null || !application.getJob().getEmployer().get_id().equals(employer.get_id())) {
+            return ResponseEntity.status(403).body("You do not own this job");
+        }
+
+        String newStatus = payload.get("status");
+        if (newStatus == null) {
+            return ResponseEntity.badRequest().body("Missing status");
+        }
+        try {
+            application.setStatus(Status.valueOf(newStatus.toUpperCase().replace(" ", "_")));
+
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid status value");
+        }
+        applicationRepository.save(application);
+
+
+        return ResponseEntity.ok("Status updated");
+    }
+
 }
