@@ -24,4 +24,7 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 
     List<Application> findTop5ByJob_Employer_IdOrderByCreatedAtDesc(Long id);
 
+    List<Application> findByJob_Employer_Id(Long id);
+
+
 }
