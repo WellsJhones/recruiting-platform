@@ -13,11 +13,13 @@ import com.wells.recruiting.platform.recruiting.platform.security.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import com.wells.recruiting.platform.recruiting.platform.user.User;
 import com.wells.recruiting.platform.recruiting.platform.Application;
 import com.wells.recruiting.platform.recruiting.platform.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.util.List;
@@ -199,6 +201,34 @@ public class JobController {
         job.setIsClosed(!job.getIsClosed()); // Toggle the closed status
         jobRepository.save(job);
         return ResponseEntity.ok(mapToResponseDTO(job));
+    }
+
+
+    // src/main/java/com/wells/recruiting/platform/recruiting/platform/controler/JobController.java
+
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('EMPLOYER')")
+    @Transactional
+    public ResponseEntity<Void> deleteJob(
+            @PathVariable("id") Long id,
+            @RequestHeader("Authorization") String token) {
+        String email = tokenService.getEmailFromToken(token.replace("Bearer ", ""));
+        var employer = employerRepository.findByEmail(email);
+        if (employer == null) {
+            return ResponseEntity.status(403).build();
+        }
+        Job job = jobRepository.findById(id).orElse(null);
+        if (job == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!job.getEmployer().getId().equals(employer.getId())) {
+            return ResponseEntity.status(403).build();
+        }
+        // Delete related applications first
+        applicationRepository.deleteByJob__id(job.get_id());
+        jobRepository.delete(job);
+        return ResponseEntity.noContent().build();
     }
 
 
