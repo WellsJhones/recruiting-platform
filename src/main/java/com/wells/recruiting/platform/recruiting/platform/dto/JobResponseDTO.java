@@ -23,5 +23,5 @@ public class JobResponseDTO {
     private Integer __v;
     private Boolean isSaved;
     private String applicationStatus;
-    // getters and setters
+    private Integer applicationCount;
 }

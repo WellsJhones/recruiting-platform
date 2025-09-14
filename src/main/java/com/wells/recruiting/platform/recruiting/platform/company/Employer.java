@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 @Table(name = "employer")
@@ -99,6 +100,12 @@ public class Employer implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public void setUpdatedAt(Date date) {
+    }
+
+    public void setVersion(int i) {
     }
 
 }

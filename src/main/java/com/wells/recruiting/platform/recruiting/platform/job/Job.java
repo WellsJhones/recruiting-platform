@@ -28,6 +28,7 @@ public class Job {
     private Boolean isClosed = false;
     private Boolean isSaved = false;
     private String applicationStatus = null;
+    private Integer applicationCount = 0;
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
 

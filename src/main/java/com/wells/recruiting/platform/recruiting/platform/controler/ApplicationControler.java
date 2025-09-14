@@ -1,4 +1,3 @@
-// src/main/java/com/wells/recruiting/platform/recruiting/platform/controler/ApplicationControler.java
 package com.wells.recruiting.platform.recruiting.platform.controler;
 
 import com.wells.recruiting.platform.recruiting.platform.Application;
@@ -40,7 +39,6 @@ public class ApplicationControler {
     @Autowired
     private EmployerRepository employerRepository;
 
-
     // Apply to a job
     @PostMapping("/{jobId}")
     public ResponseEntity<?> applyToJob(
@@ -62,7 +60,6 @@ public class ApplicationControler {
 
         Application existing = applicationRepository.findByJob__idAndApplicant__id(job.get_id(), user.get_id());
 
-
         if (existing != null) {
             return ResponseEntity.status(400).body("You have already applied to this job");
         }
@@ -70,18 +67,26 @@ public class ApplicationControler {
         Application application = new Application();
         application.setJob(job);
         application.setApplicant(user);
-//        application.setResume(user.getResume());
 
         applicationRepository.save(application);
 
-        return ResponseEntity.status(201).body(application);
+        // Update application count
+        Integer count = job.getApplicationCount();
+        job.setApplicationCount(count == null ? 1 : count + 1);
+        jobRepository.save(job);
+
+        // Return application and applicationCount
+        Map<String, Object> response = new HashMap<>();
+        response.put("application", application);
+        response.put("applicationCount", job.getApplicationCount());
+        return ResponseEntity.status(201).body(response);
     }
-    // src/main/java/com/wells/recruiting/platform/recruiting/platform/controler/ApplicationControler.java
+
+    // Get applications for the logged-in user
     @GetMapping("/my")
     public ResponseEntity<?> getMyApplications(@RequestHeader("Authorization") String token) {
         String email = tokenService.getEmailFromToken(token.replace("Bearer ", ""));
         User user = userRepository.findByEmail(email);
-
 
         if (user == null) {
             return ResponseEntity.status(401).body("Invalid user");
@@ -109,6 +114,8 @@ public class ApplicationControler {
                 jobDto.setLocation(app.getJob().getLocation());
                 jobDto.setType(app.getJob().getType());
                 jobDto.setCompany(app.getJob().getEmployer() != null ? String.valueOf(app.getJob().getEmployer().get_id()) : null);
+                jobDto.setApplicationCount(app.getJob().getApplicationCount());
+
                 dto.setJob(jobDto);
             }
             return dto;
@@ -116,14 +123,14 @@ public class ApplicationControler {
 
         return ResponseEntity.ok(dtos);
     }
+
+    // Get applicants for a specific job (employer only)
     @GetMapping("/job/{id}")
     public ResponseEntity<?> getApplicantsForJob(
             @RequestHeader("Authorization") String token,
             @PathVariable String id
     ) {
-        System.out.println("Received request to get applicants for job ID: " + id);
         String email = tokenService.getEmailFromToken(token.replace("Bearer ", ""));
-        System.out.println(email);
         Employer employer = employerRepository.findByEmail(email);
 
         if (employer == null || !"employer".equalsIgnoreCase(employer.getRole())) {
@@ -134,7 +141,6 @@ public class ApplicationControler {
         if (job == null) {
             return ResponseEntity.status(404).body("Job not found");
         }
-        System.out.println("Employer from token: " + employer.get_id() + ", Job owner: " + (job.getEmployer() != null ? job.getEmployer().get_id() : "null"));
 
         if (job.getEmployer() == null || !job.getEmployer().get_id().equals(employer.get_id())) {
             return ResponseEntity.status(403).body("You do not own this job");
@@ -155,9 +161,8 @@ public class ApplicationControler {
             dto.setStatus(
                     app.getStatus() != null
                             ? ApplicationStatus.valueOf(app.getStatus())
-                            : ApplicationStatus.APPLIED // or your desired default
+                            : ApplicationStatus.APPLIED
             );
-
 
             dto.setCreatedAt(app.getCreatedAt().toString());
             dto.setUpdatedAt(app.getUpdatedAt().toString());
@@ -170,15 +175,12 @@ public class ApplicationControler {
                 jobDto.setLocation(app.getJob().getLocation());
                 jobDto.setType(app.getJob().getType());
                 jobDto.setCompany(app.getJob().getEmployer() != null ? String.valueOf(app.getJob().getEmployer().get_id()) : null);
+                jobDto.setApplicationCount(app.getJob().getApplicationCount());
                 dto.setJob(jobDto);
             }
             return dto;
         }).toList();
 
-
-
         return ResponseEntity.ok(dtos);
     }
-
-
 }

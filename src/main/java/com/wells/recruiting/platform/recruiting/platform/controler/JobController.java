@@ -1,5 +1,7 @@
 // src/main/java/com/wells/recruiting/platform/recruiting/platform/controler/JobController.java
 package com.wells.recruiting.platform.recruiting.platform.controler;
+import com.wells.recruiting.platform.recruiting.platform.repository.ApplicationRepository;
+
 
 import com.wells.recruiting.platform.recruiting.platform.dto.JobRequest;
 import com.wells.recruiting.platform.recruiting.platform.dto.JobResponseDTO;
@@ -26,6 +28,10 @@ public class JobController {
     private EmployerRepository employerRepository;
     @Autowired
     private TokenService tokenService;
+
+    @Autowired
+    private ApplicationRepository applicationRepository;
+
 
     @PostMapping
     public ResponseEntity<JobResponseDTO> createJob(@RequestBody JobRequest jobRequest, @RequestHeader("Authorization") String token) {
@@ -79,6 +85,8 @@ public class JobController {
         company.setCompanyLogo(job.getEmployer().getCompanyLogo());
         company.setCompanyName(job.getEmployer().getCompanyName());
         dto.setCompany(company);
+        int count = applicationRepository.countByJob__id(job.get_id());
+        dto.setApplicationCount(count);
 
         return dto;
     }
@@ -134,7 +142,12 @@ public class JobController {
         }
         List<Job> jobs = jobRepository.findByEmployerId(employer.getId());
         List<JobResponseDTO> jobDTOs = jobs.stream()
-                .map(this::mapToResponseDTO)
+                .map(job -> {
+                    JobResponseDTO dto = mapToResponseDTO(job);
+                    int count = applicationRepository.countByJob__id(job.get_id());
+                    dto.setApplicationCount(count); // Add this setter to your DTO
+                    return dto;
+                })
                 .collect(Collectors.toList());
         return ResponseEntity.ok(jobDTOs);
     }

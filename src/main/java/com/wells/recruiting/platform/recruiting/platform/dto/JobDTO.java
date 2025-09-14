@@ -11,5 +11,7 @@ public class JobDTO {
     private String location;
     private String type;
     private String company;
+    private Integer applicationCount;
+
 
 }

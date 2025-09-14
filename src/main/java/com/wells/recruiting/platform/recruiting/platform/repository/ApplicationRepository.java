@@ -12,4 +12,5 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     List<Application> findByJob__id(Long jobId);
 
 
+    int countByJob__id(Long id);
 }

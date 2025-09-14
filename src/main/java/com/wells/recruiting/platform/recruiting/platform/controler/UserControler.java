@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -34,14 +35,16 @@ public class UserControler {
     @PostMapping("/auth/register")
     @Transactional
     public ResponseEntity<Object> registerUser(
-            @RequestParam("name") String name,
-            @RequestParam("email") String email,
-            @RequestParam("password") String password,
-            @RequestParam("role") String role,
-            @RequestParam(value = "companyName", required = false) String companyName,
-            @RequestParam(value = "companyDescription", required = false) String companyDescription,
+            @RequestBody Map<String, Object> payload,
             @RequestParam(value = "image", required = false) MultipartFile image
     ) {
+        String name = (String) payload.get("name");
+        String email = (String) payload.get("email");
+        String password = (String) payload.get("password");
+        String role = (String) payload.get("role");
+        String companyName = (String) payload.get("companyName");
+        String companyDescription = (String) payload.get("companyDescription");
+
         if (repository.existsByEmail(email) || employerRepository.existsByEmail(email)) {
             return ResponseEntity.status(409).body("Email already in use");
         }
@@ -60,11 +63,12 @@ public class UserControler {
             try {
                 image.transferTo(dest);
                 String imageUrl = "http://localhost:8000/uploads/" + fileName;
-                imagePath = imageUrl; // <-- Assign the URL to imagePath
+                imagePath = imageUrl;
             } catch (IOException e) {
                 return ResponseEntity.status(500).body("Image upload failed");
             }
-
+        } else if (payload.get("avatar") != null) {
+            imagePath = (String) payload.get("avatar");
         }
 
         if ("employer".equalsIgnoreCase(role)) {
@@ -98,7 +102,7 @@ public class UserControler {
             user.setEmail(email);
             user.setPassword(passwordEncoder.encode(password));
             user.setRole(role);
-            user.setAvatar(imagePath); // <-- Set avatar path
+            user.setAvatar(imagePath);
             repository.save(user);
 
             String tokenJWT = tokenService.generateToken(user);
@@ -114,6 +118,7 @@ public class UserControler {
             return ResponseEntity.badRequest().body("Invalid role");
         }
     }
+
 
     @GetMapping("/auth/me")
     public ResponseEntity<?> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
@@ -174,6 +179,57 @@ public class UserControler {
             return ResponseEntity.badRequest().body("Invalid user ID format");
         }
     }
+
+// In src/main/java/com/wells/recruiting/platform/recruiting/platform/controler/UserControler.java
+
+    @PutMapping("/user/profile")
+    @Transactional
+    public ResponseEntity<?> updateUserProfile(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody Map<String, Object> payload
+    ) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = tokenService.extractEmail(token);
+        String role = tokenService.extractRole(token);
+
+        if ("employer".equalsIgnoreCase(role)) {
+            Employer employer = employerRepository.findByEmail(email);
+            if (employer == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            employer.setCompanyName((String) payload.get("companyName"));
+            employer.setCompanyDescription((String) payload.get("companyDescription"));
+            employer.setCompanyLogo((String) payload.get("companyLogo"));
+            employer.setAvatar((String) payload.get("avatar"));
+            employer.setName((String) payload.get("name"));
+            employer.setUpdatedAt(new java.util.Date());
+            employerRepository.save(employer);
+            return ResponseEntity.ok(new DataDetailsEmployer(
+                    employer.get_id(),
+                    employer.getName(),
+                    employer.getEmail(),
+                    employer.getRole(),
+                    employer.getCompanyName(),
+                    employer.getCompanyDescription(),
+                    employer.getCompanyLogo(),
+                    employer.getAvatar()
+            ));
+        } else if ("jobseeker".equalsIgnoreCase(role)) {
+            User user = repository.findByEmail(email);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            user.setName((String) payload.get("name"));
+            user.setAvatar((String) payload.get("avatar"));
+            user.setResume((String) payload.get("resume"));
+            user.setUpdatedAt(java.time.Instant.now());
+            user.setVersion(user.getVersion() == null ? 1 : user.getVersion() + 1);
+            repository.save(user);
+            return ResponseEntity.ok(new DataDetailsUser(user));
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid role");
+    }
+
 
 
 }
