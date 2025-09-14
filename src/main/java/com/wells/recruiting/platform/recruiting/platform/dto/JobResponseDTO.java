@@ -24,4 +24,6 @@ public class JobResponseDTO {
     private Boolean isSaved;
     private String applicationStatus;
     private Integer applicationCount;
+    private String category;
+
 }

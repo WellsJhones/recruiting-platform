@@ -89,6 +89,7 @@ public class JobController {
         dto.setSalaryMax(job.getSalaryMax());
         dto.setIsClosed(job.getIsClosed());
         dto.setIsSaved(job.getIsSaved());
+        dto.setCategory(job.getCategory());
         dto.setCreatedAt(job.getCreatedAt() != null ? job.getCreatedAt().toString() : null);
         dto.setUpdatedAt(job.getUpdatedAt() != null ? job.getUpdatedAt().toString() : null);
 
