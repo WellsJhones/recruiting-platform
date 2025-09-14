@@ -1,7 +1,11 @@
 package com.wells.recruiting.platform.recruiting.platform.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class DataLoginResponseEmployer {
     @JsonProperty("_id")
     private Long _id;
@@ -27,13 +31,5 @@ public class DataLoginResponseEmployer {
         this.token = token;
     }
 
-    // Getters and setters
-    public Long get_id() { return _id; }
-    public String getName() { return name; }
-    public String getEmail() { return email; }
-    public String getRole() { return role; }
-    public String getToken() { return token; }
-    public String getCompanyName() { return companyName; }
-    public String getCompanyDescription() { return companyDescription; }
-    public String getCompanyLogo() { return companyLogo; }
+
 }
