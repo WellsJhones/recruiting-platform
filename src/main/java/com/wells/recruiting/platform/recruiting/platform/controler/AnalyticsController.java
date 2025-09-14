@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import com.wells.recruiting.platform.recruiting.platform.security.TokenService;
@@ -56,14 +57,25 @@ public class AnalyticsController {
         long totalHires = applicationRepository.countByJob_Employer_IdAndStatus(owner.get_id(), Status.ACCEPTED);
         counts.put("totalHires", totalHires);
 
-        Date oneWeekAgo = Date.from(LocalDate.now().minusDays(7).atStartOfDay(ZoneId.systemDefault()).toInstant());
-        long prevActiveJobs = jobRepository.countActiveJobsLastWeek(owner.get_id(), oneWeekAgo);
+        // Fetch all jobs for the employer
+        List<Job> jobs = jobRepository.findByEmployer_Id(owner.get_id());
 
-//        long prevApplications = applicationRepository.countApplicationsLastWeek(owner.get_id(), oneWeekAgo);
-//        long prevHired = applicationRepository.countHiredLastWeek(owner.get_id(), Status.ACCEPTED, oneWeekAgo);
+        // Calculate one week and two weeks ago
+        LocalDateTime oneWeekAgo = LocalDateTime.now().minusDays(7);
+        LocalDateTime twoWeeksAgo = LocalDateTime.now().minusDays(14);
+
+// Count active jobs created in the previous week (between 1 and 2 weeks ago)
+        long prevActiveJobs = jobs.stream()
+                .filter(job -> job.getCreatedAt() != null
+                        && job.getCreatedAt().isAfter(twoWeeksAgo)
+                        && job.getCreatedAt().isBefore(oneWeekAgo))
+                .count();
+
+        long jobsCreatedLastWeek = jobs.stream()
+                .filter(job -> job.getCreatedAt() != null && job.getCreatedAt().isAfter(oneWeekAgo))
+                .count();
 
 
-// Calculate trends (percentage change)
         long activeJobsTrend = totalActiveJobs - prevActiveJobs;
         double activeJobsTrendPercent;
         if (prevActiveJobs == 0) {
@@ -72,18 +84,14 @@ public class AnalyticsController {
             activeJobsTrendPercent = ((double)(totalActiveJobs - prevActiveJobs) / prevActiveJobs) * 100;
         }
 
-
-//        long applicationsTrend = totalApplications - prevApplications;
-//        long hiredTrend = totalHires - prevHired;
-
         Map<String, Object> trends = new HashMap<>();
         trends.put("activeJobs", activeJobsTrend);
+;
 //        trends.put("applications", applicationsTrend);
 //        trends.put("hired", hiredTrend);
         counts.put("trends", trends);
         Map<String, Object> data = new HashMap<>();
 
-              List<Job> jobs = jobRepository.findTop5ByOrderByCreatedAtDesc();
         List<Map<String, Object>> recentJobs = new ArrayList<>();
         for (Job job : jobs) {
             if (job.getEmployer() != null && job.getEmployer().get_id().equals(owner.get_id())) {

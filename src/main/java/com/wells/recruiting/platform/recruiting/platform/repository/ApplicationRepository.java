@@ -23,4 +23,5 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     long countByJob_Employer_Id(Long id);
 
     List<Application> findTop5ByJob_Employer_IdOrderByCreatedAtDesc(Long id);
+
 }
