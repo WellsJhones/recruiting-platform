@@ -1,4 +1,5 @@
 package com.wells.recruiting.platform.recruiting.platform.controler;
+import com.wells.recruiting.platform.recruiting.platform.Application;
 import com.wells.recruiting.platform.recruiting.platform.company.Employer;
 import com.wells.recruiting.platform.recruiting.platform.job.Job;
 import com.wells.recruiting.platform.recruiting.platform.model.Status;
@@ -100,48 +101,37 @@ public class AnalyticsController {
 
 
 
+        // Fetch the 5 most recent applications for jobs owned by the employer
+        List<Application> applications = applicationRepository.findTop5ByJob_Employer_IdOrderByCreatedAtDesc(owner.get_id());
+
         List<Map<String, Object>> recentApplications = new ArrayList<>();
-        recentApplications.add(Map.of(
-                "_id", "68b7af5038e3bafa499e0a45",
-                "job", Map.of("_id", "68ac8fe36c27e14bf58fa005", "title", "Backend Developer"),
-                "applicant", Map.of("_id", "68b5ae4a383aa37aee284cc5", "name", "Loko", "email", "badeco@brabo.com", "avatar", "http://129.148.29.122:8000/uploads/1756861531662-132031351_p0.png"),
-                "resume", "http://129.148.29.122:8000/uploads/1756868389418-Screenshot_20250805_155432_Firefox.jpg",
-                "status", "Applied",
-                "createdAt", "2025-09-03T03:00:32.026Z",
-                "updatedAt", "2025-09-03T03:00:32.026Z",
-                "__v", 0
-        ));
-        recentApplications.add(Map.of(
-                "_id", "68b612ba38e3bafa499e02c5",
-                "job", Map.of("_id", "68ac69da7207f11e697bb0f9", "title", "Frontend Developer (React JS)"),
-                "applicant", Map.of("_id", "68b5ae4a383aa37aee284cc5", "name", "Loko", "email", "badeco@brabo.com", "avatar", "http://129.148.29.122:8000/uploads/1756861531662-132031351_p0.png"),
-                "status", "Applied",
-                "createdAt", "2025-09-01T21:40:10.152Z",
-                "updatedAt", "2025-09-01T21:40:10.152Z",
-                "__v", 0
-        ));
-        recentApplications.add(Map.of(
-                "_id", "68acb0691eb04677ea435bd9",
-                "job", Map.of("_id", "68ac69da7207f11e697bb0f9", "title", "Frontend Developer (React JS)"),
-                "applicant", Map.of("_id", "68aca548ec6f11085b8c9cbb", "name", "Jhon", "email", "Jhon@example.com", "avatar", "http://localhost:8000/uploads/1756144936811-Captura de tela 2025-08-11 222435.png"),
-                "status", "Rejected",
-                "createdAt", "2025-08-25T18:50:17.741Z",
-                "updatedAt", "2025-08-25T19:20:57.100Z",
-                "__v", 0
-        ));
-        recentApplications.add(Map.of(
-                "_id", "68aca5b82a306a6c8575407e",
-                "job", Map.of("_id", "68ac8fe36c27e14bf58fa005", "title", "Backend Developer"),
-                "applicant", Map.of("_id", "68aca548ec6f11085b8c9cbb", "name", "Jhon", "email", "Jhon@example.com", "avatar", "http://localhost:8000/uploads/1756144936811-Captura de tela 2025-08-11 222435.png"),
-                "status", "Applied",
-                "createdAt", "2025-08-25T18:04:40.783Z",
-                "updatedAt", "2025-08-25T18:04:40.783Z",
-                "__v", 0
-        ));
+        for (Application app : applications) {
+            Map<String, Object> jobMap = Map.of(
+                    "_id", app.getJob().get_id(),
+                    "title", app.getJob().getTitle()
+            );
+            Map<String, Object> applicantMap = Map.of(
+                    "_id", app.getApplicant().get_id(),
+                    "name", app.getApplicant().getName(),
+                    "email", app.getApplicant().getEmail(),
+                    "avatar", app.getApplicant().getAvatar()
+            );
+            Map<String, Object> appMap = new HashMap<>();
+            appMap.put("_id", app.get_id());
+            appMap.put("job", jobMap);
+            appMap.put("applicant", applicantMap);
+            appMap.put("resume", app.getResume());
+            appMap.put("status", app.getStatus() != null ? app.getStatus().name() : "UNKNOWN");
+            appMap.put("createdAt", app.getCreatedAt().toString());
+            appMap.put("updatedAt", app.getUpdatedAt().toString());
+            appMap.put("__v", 0); // or use actual version if available
+            recentApplications.add(appMap);
+        }
         data.put("recentApplications", recentApplications);
 
         response.put("counts", counts);
         response.put("data", data);
+
 
         return ResponseEntity.ok(response);
     }

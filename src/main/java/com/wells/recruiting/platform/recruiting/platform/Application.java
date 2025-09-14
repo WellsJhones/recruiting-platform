@@ -43,4 +43,7 @@ public class Application {
     }
 
 
+    public Object getResume() {
+        return applicant.getResume();
+    }
 }
