@@ -1,14 +1,12 @@
 // src/main/java/com/wells/recruiting/platform/recruiting/platform/controler/JobController.java
 package com.wells.recruiting.platform.recruiting.platform.controler;
-import com.wells.recruiting.platform.recruiting.platform.repository.ApplicationRepository;
+import com.wells.recruiting.platform.recruiting.platform.repository.*;
 
 
 import com.wells.recruiting.platform.recruiting.platform.dto.JobRequest;
 import com.wells.recruiting.platform.recruiting.platform.dto.JobResponseDTO;
 import com.wells.recruiting.platform.recruiting.platform.dto.CompanyDTO;
 import com.wells.recruiting.platform.recruiting.platform.job.Job;
-import com.wells.recruiting.platform.recruiting.platform.repository.JobRepository;
-import com.wells.recruiting.platform.recruiting.platform.repository.EmployerRepository;
 import com.wells.recruiting.platform.recruiting.platform.security.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import com.wells.recruiting.platform.recruiting.platform.user.User;
 import com.wells.recruiting.platform.recruiting.platform.Application;
-import com.wells.recruiting.platform.recruiting.platform.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +36,9 @@ public class JobController {
     private UserRepository userRepository;
     @Autowired
     private ApplicationRepository applicationRepository;
+    @Autowired
+    private SaveJobRepository saveJobRepository;
+
 
 
     @PostMapping
@@ -76,7 +76,7 @@ public class JobController {
     }
 
 
-    // Overload mapToResponseDTO to accept User
+    // Java
     private JobResponseDTO mapToResponseDTO(Job job, User user) {
         JobResponseDTO dto = new JobResponseDTO();
         dto.set_id(job.get_id().toString());
@@ -88,12 +88,19 @@ public class JobController {
         dto.setSalaryMin(job.getSalaryMin());
         dto.setSalaryMax(job.getSalaryMax());
         dto.setIsClosed(job.getIsClosed());
-        dto.setIsSaved(job.getIsSaved());
+
+        // Set isSaved based on user
+        boolean isSaved = false;
+        if (user != null) {
+            isSaved = saveJobRepository.existsByJobseekerAndJob(user.get_id(), job.get_id());
+
+        }
+        dto.setIsSaved(isSaved);
+
         dto.setCategory(job.getCategory());
         dto.setCreatedAt(job.getCreatedAt() != null ? job.getCreatedAt().toString() : null);
         dto.setUpdatedAt(job.getUpdatedAt() != null ? job.getUpdatedAt().toString() : null);
 
-        // Company info
         CompanyDTO company = new CompanyDTO();
         company.set_id(job.getEmployer().getId().toString());
         company.setName(job.getEmployer().getName());
@@ -104,7 +111,6 @@ public class JobController {
         int count = applicationRepository.countByJob__id(job.get_id());
         dto.setApplicationCount(count);
 
-        // Set applicationStatus for current user
         Application app = applicationRepository.findByJob__idAndApplicant__id(job.get_id(), user != null ? user.get_id() : null);
         String applicationStatus = null;
         if (app != null && app.getStatus() != null) {
@@ -112,9 +118,9 @@ public class JobController {
         }
         dto.setApplicationStatus(applicationStatus);
 
-
         return dto;
     }
+
     private JobResponseDTO mapToResponseDTO(Job job) {
         return mapToResponseDTO(job, null);
     }
