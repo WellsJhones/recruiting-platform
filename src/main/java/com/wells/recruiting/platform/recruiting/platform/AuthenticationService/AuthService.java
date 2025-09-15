@@ -1,4 +1,4 @@
-package com.wells.recruiting.platform.recruiting.platform.user;
+package com.wells.recruiting.platform.recruiting.platform.AuthenticationService;
 
 import com.wells.recruiting.platform.recruiting.platform.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;

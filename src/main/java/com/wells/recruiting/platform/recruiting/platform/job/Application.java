@@ -1,6 +1,5 @@
-package com.wells.recruiting.platform.recruiting.platform;
+package com.wells.recruiting.platform.recruiting.platform.job;
 
-import com.wells.recruiting.platform.recruiting.platform.job.Job;
 import com.wells.recruiting.platform.recruiting.platform.model.Status;
 import com.wells.recruiting.platform.recruiting.platform.user.User;
 import jakarta.persistence.*;

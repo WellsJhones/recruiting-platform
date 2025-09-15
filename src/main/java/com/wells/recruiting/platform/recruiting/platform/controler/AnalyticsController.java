@@ -1,5 +1,5 @@
 package com.wells.recruiting.platform.recruiting.platform.controler;
-import com.wells.recruiting.platform.recruiting.platform.Application;
+import com.wells.recruiting.platform.recruiting.platform.job.Application;
 import com.wells.recruiting.platform.recruiting.platform.company.Employer;
 import com.wells.recruiting.platform.recruiting.platform.job.Job;
 import com.wells.recruiting.platform.recruiting.platform.model.Status;

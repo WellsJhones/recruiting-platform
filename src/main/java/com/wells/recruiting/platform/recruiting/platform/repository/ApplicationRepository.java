@@ -1,11 +1,8 @@
 package com.wells.recruiting.platform.recruiting.platform.repository;// src/main/java/com/wells/recruiting/platform/recruiting/platform/repository/ApplicationRepository.java
-import com.wells.recruiting.platform.recruiting.platform.Application;
+import com.wells.recruiting.platform.recruiting.platform.job.Application;
 import com.wells.recruiting.platform.recruiting.platform.model.Status;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
-import java.util.Date;
 import java.util.List;
 
 public interface ApplicationRepository extends JpaRepository<Application, Long> {

@@ -55,14 +55,17 @@ public class UserControler {
 
         String imagePath = null;
         if (image != null && !image.isEmpty()) {
-            String uploadDir = "C:\\Users\\Wells\\Documents\\uploads";
+            String uploadDir = "/mnt/my_files"; // Linux absolute path
             File dir = new File(uploadDir);
-            if (!dir.exists()) dir.mkdirs();
+            if (!dir.exists() && !dir.mkdirs()) {
+                return ResponseEntity.status(500).body("Failed to create upload directory");
+            }
             String fileName = System.currentTimeMillis() + "-" + image.getOriginalFilename();
             File dest = new File(dir, fileName);
+
             try {
                 image.transferTo(dest);
-                String imageUrl = "http://localhost:8000/uploads/" + fileName;
+                String imageUrl = "http://164.152.61.249:8000/uploads/" + fileName;
                 imagePath = imageUrl;
             } catch (IOException e) {
                 return ResponseEntity.status(500).body("Image upload failed");
@@ -181,7 +184,6 @@ public class UserControler {
         }
     }
 
-// In src/main/java/com/wells/recruiting/platform/recruiting/platform/controler/UserControler.java
 
     @PutMapping("/user/profile")
     @Transactional

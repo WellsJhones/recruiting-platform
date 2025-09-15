@@ -14,9 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import com.wells.recruiting.platform.recruiting.platform.user.User;
-import com.wells.recruiting.platform.recruiting.platform.Application;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.transaction.annotation.Transactional;
+import com.wells.recruiting.platform.recruiting.platform.job.Application;
 
 
 import java.util.List;
