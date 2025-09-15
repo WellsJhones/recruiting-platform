@@ -7,6 +7,6 @@ import java.util.List;
 
 public interface SaveJobRepository extends JpaRepository<SaveJob, Long> {
     SaveJob findByJobAndJobseeker(Long jobId, Long jobseeker);
-
+    List<SaveJob> findByJobseeker(Long jobseeker);
     List<SaveJob> findBy_id(Long jobseekerId);
 }

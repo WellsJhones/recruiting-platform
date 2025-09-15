@@ -120,13 +120,18 @@ public class JobController {
     }
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('jobseeker')")
-    public ResponseEntity<JobResponseDTO> getJobById(@PathVariable("id") Long id) {
+    public ResponseEntity<JobResponseDTO> getJobById(
+            @PathVariable("id") Long id,
+            @RequestParam("userId") Long userId
+    ) {
         Job job = jobRepository.findById(id).orElse(null);
         if (job == null) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(mapToResponseDTO(job));
+        User user = userRepository.findById(userId).orElse(null);
+        return ResponseEntity.ok(mapToResponseDTO(job, user));
     }
+
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('EMPLOYER')")

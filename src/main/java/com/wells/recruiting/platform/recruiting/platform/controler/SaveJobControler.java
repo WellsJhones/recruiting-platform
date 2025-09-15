@@ -1,5 +1,7 @@
 package com.wells.recruiting.platform.recruiting.platform.controler;
 
+import com.wells.recruiting.platform.recruiting.platform.company.Employer;
+import com.wells.recruiting.platform.recruiting.platform.job.Job;
 import com.wells.recruiting.platform.recruiting.platform.job.SaveJob;
 import com.wells.recruiting.platform.recruiting.platform.repository.JobRepository;
 import com.wells.recruiting.platform.recruiting.platform.repository.SaveJobRepository;
@@ -11,7 +13,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/saved-jobs")
@@ -60,4 +65,58 @@ public class SaveJobControler {
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
     }
+    @GetMapping("/my")
+    public ResponseEntity<?> getMySavedJobs(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = tokenService.extractEmail(token);
+        User user = userRepository.findByEmail(email);
+        Long jobseekerId = user.get_id();
+
+        // Fetch saved jobs for this user
+        List<SaveJob> savedJobs = savejobRepository.findByJobseeker(jobseekerId);
+
+        // Map each SaveJob to the required response format
+        List<Map<String, Object>> response = savedJobs.stream().map(saveJob -> {
+            // Fetch job details
+            Job job = (Job) jobRepository.findById(saveJob.getJob()).orElse(null);
+
+            if (job == null) return null;
+            Employer employer = job.getEmployer(); // Replace with your actual getter
+
+            Map<String, Object> companyMap = new HashMap<>();
+            if (employer.get_id() != null) companyMap.put("_id", employer.get_id());
+            if (employer.getName() != null) companyMap.put("name", employer.getName());
+            if (employer.getCompanyName() != null) companyMap.put("companyName", employer.getCompanyName());
+            if (employer.getCompanyLogo() != null) companyMap.put("companyLogo", employer.getCompanyLogo());
+
+
+            // Build job details map (add company info as needed)
+            Map<String, Object> jobMap = new HashMap<>();
+            jobMap.put("_id", job.get_id());
+            jobMap.put("title", job.getTitle());
+            jobMap.put("description", job.getDescription());
+            jobMap.put("requirements", job.getRequirements());
+            jobMap.put("location", job.getLocation());
+            jobMap.put("category", job.getCategory());
+            jobMap.put("type", job.getType());
+            jobMap.put("salaryMin", job.getSalaryMin());
+            jobMap.put("salaryMax", job.getSalaryMax());
+            jobMap.put("isClosed", job.getIsClosed());
+            jobMap.put("createdAt", job.getCreatedAt());
+            jobMap.put("updatedAt", job.getUpdatedAt());
+            jobMap.put("company", companyMap);;
+
+            return Map.of(
+                    "_id", saveJob.get_id(),
+                    "jobseeker", saveJob.getJobseeker(),
+                    "job", jobMap,
+                    "createdAt", saveJob.getCreatedAt(),
+                    "updatedAt", saveJob.getUpdatedAt(),
+                    "__v", saveJob.get__v()
+            );
+        }).filter(Objects::nonNull).toList();
+
+        return ResponseEntity.ok(response);
+    }
+
 }
