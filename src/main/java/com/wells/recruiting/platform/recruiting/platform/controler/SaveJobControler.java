@@ -119,21 +119,21 @@ public class SaveJobControler {
         return ResponseEntity.ok(response);
     }
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> unsaveJob(
+    public ResponseEntity<?> unsaveJobByJobId(
             @PathVariable Long id,
             @RequestHeader("Authorization") String authHeader) {
 
-        try {
-            if (!savejobRepository.existsById(id)) {
-                return ResponseEntity.status(404).body(Map.of("error", "Saved job not found"));
-            }
-            savejobRepository.deleteById(id);
-            return ResponseEntity.ok(Map.of("message", "Job removed from saved list"));
+        String token = authHeader.replace("Bearer ", "");
+        String email = tokenService.extractEmail(token);
+        User user = userRepository.findByEmail(email);
+        Long jobseekerId = user.get_id();
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        SaveJob saveJob = savejobRepository.findByJobAndJobseeker(id, jobseekerId);
+        if (saveJob == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "Saved job not found"));
         }
+        savejobRepository.deleteById(saveJob.get_id());
+        return ResponseEntity.ok(Map.of("message", "Job removed from saved list"));
     }
 
 
