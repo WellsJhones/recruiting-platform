@@ -57,9 +57,18 @@ public class UserControler {
         if (image != null && !image.isEmpty()) {
             String uploadDir = "C:\\Users\\Wells\\Documents\\uploads";
             File dir = new File(uploadDir);
-            if (!dir.exists()) dir.mkdirs();
-            String fileName = System.currentTimeMillis() + "-" + image.getOriginalFilename();
+            if (!dir.exists() && !dir.mkdirs()) {
+                return ResponseEntity.status(500).body("Failed to create upload directory");
+            }
+            // Sanitize the original filename
+            String originalName = image.getOriginalFilename();
+            String sanitized = originalName == null ? "file" : originalName
+                    .toLowerCase()
+                    .replaceAll("\\s+", "_")
+                    .replaceAll("[^a-z0-9._-]", "");
+            String fileName = System.currentTimeMillis() + "-" + sanitized;
             File dest = new File(dir, fileName);
+
             try {
                 image.transferTo(dest);
                 String imageUrl = "http://localhost:8000/uploads/" + fileName;

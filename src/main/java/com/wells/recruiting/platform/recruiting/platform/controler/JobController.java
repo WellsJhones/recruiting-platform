@@ -128,15 +128,17 @@ public class JobController {
     @PreAuthorize("hasRole('jobseeker')")
     public ResponseEntity<JobResponseDTO> getJobById(
             @PathVariable("id") Long id,
-            @RequestParam("userId") Long userId
+            @RequestHeader("Authorization") String token
     ) {
         Job job = jobRepository.findById(id).orElse(null);
         if (job == null) {
             return ResponseEntity.notFound().build();
         }
-        User user = userRepository.findById(userId).orElse(null);
+        String email = tokenService.getEmailFromToken(token.replace("Bearer ", ""));
+        User user = userRepository.findByEmail(email);
         return ResponseEntity.ok(mapToResponseDTO(job, user));
     }
+
 
 
     @PutMapping("/{id}")

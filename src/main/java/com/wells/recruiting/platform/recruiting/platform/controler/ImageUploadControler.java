@@ -32,9 +32,18 @@ public class ImageUploadControler {
 
         String uploadDir = "C:\\Users\\Wells\\Documents\\uploads";
         File dir = new File(uploadDir);
-        if (!dir.exists()) dir.mkdirs();
+        if (!dir.exists() && !dir.mkdirs()) {
+            return ResponseEntity.status(500).body(java.util.Map.of("error", "Failed to create upload directory"));
+        }
 
-        String fileName = System.currentTimeMillis() + "-" + file.getOriginalFilename();
+        // Sanitize the original filename
+        String originalName = file.getOriginalFilename();
+        String sanitized = originalName == null ? "file" : originalName
+                .toLowerCase()
+                .replaceAll("\\s+", "_")
+                .replaceAll("[^a-z0-9._-]", "");
+        String fileName = System.currentTimeMillis() + "-" + sanitized;
+
         File dest = new File(dir, fileName);
 
         try {
