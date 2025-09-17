@@ -1,7 +1,7 @@
 // src/main/java/com/wells/recruiting/platform/recruiting/platform/controler/JobController.java
 package com.wells.recruiting.platform.recruiting.platform.controler;
-import com.wells.recruiting.platform.recruiting.platform.repository.*;
 
+import com.wells.recruiting.platform.recruiting.platform.repository.*;
 
 import com.wells.recruiting.platform.recruiting.platform.dto.JobRequest;
 import com.wells.recruiting.platform.recruiting.platform.dto.JobResponseDTO;
@@ -17,7 +17,6 @@ import com.wells.recruiting.platform.recruiting.platform.user.User;
 import com.wells.recruiting.platform.recruiting.platform.Application;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.transaction.annotation.Transactional;
-
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,10 +38,9 @@ public class JobController {
     @Autowired
     private SaveJobRepository saveJobRepository;
 
-
-
     @PostMapping
-    public ResponseEntity<JobResponseDTO> createJob(@RequestBody JobRequest jobRequest, @RequestHeader("Authorization") String token) {
+    public ResponseEntity<JobResponseDTO> createJob(@RequestBody JobRequest jobRequest,
+            @RequestHeader("Authorization") String token) {
         String email = tokenService.getEmailFromToken(token.replace("Bearer ", ""));
         var employer = employerRepository.findByEmail(email);
         if (employer == null) {
@@ -62,19 +60,43 @@ public class JobController {
         return ResponseEntity.ok(mapToResponseDTO(job));
     }
 
-
     @GetMapping
     @PreAuthorize("hasRole('jobseeker')")
-    public ResponseEntity<List<JobResponseDTO>> getOpenJobs(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<List<JobResponseDTO>> getOpenJobs(
+            @RequestHeader("Authorization") String token,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Integer minSalary,
+            @RequestParam(required = false) Integer maxSalary,
+            @RequestParam(required = false) String userId,
+            @RequestParam(required = false) String experience,
+            @RequestParam(required = false) Boolean remoteOnly) {
         String email = tokenService.getEmailFromToken(token.replace("Bearer ", ""));
         User user = userRepository.findByEmail(email);
         List<Job> jobs = jobRepository.findByIsClosedFalse();
-        List<JobResponseDTO> jobDTOs = jobs.stream()
+        List<Job> filtered = jobs.stream()
+                .filter(job -> keyword == null || job.getTitle().toLowerCase().contains(keyword.toLowerCase())
+                        || (job.getDescription() != null
+                                && job.getDescription().toLowerCase().contains(keyword.toLowerCase())))
+                .filter(job -> location == null
+                        || (job.getLocation() != null && job.getLocation().equalsIgnoreCase(location)))
+                .filter(job -> category == null
+                        || (job.getCategory() != null && job.getCategory().equalsIgnoreCase(category)))
+                .filter(job -> type == null || (job.getType() != null && job.getType().equalsIgnoreCase(type)))
+                .filter(job -> minSalary == null || (job.getSalaryMin() != null && job.getSalaryMin() >= minSalary))
+                .filter(job -> maxSalary == null || (job.getSalaryMax() != null && job.getSalaryMax() <= maxSalary))
+                .filter(job -> experience == null || (job.getRequirements() != null
+                        && job.getRequirements().toLowerCase().contains(experience.toLowerCase())))
+                .filter(job -> remoteOnly == null || !remoteOnly
+                        || (job.getLocation() != null && job.getLocation().toLowerCase().contains("remote")))
+                .collect(Collectors.toList());
+        List<JobResponseDTO> jobDTOs = filtered.stream()
                 .map(job -> mapToResponseDTO(job, user))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(jobDTOs);
     }
-
 
     // Java
     private JobResponseDTO mapToResponseDTO(Job job, User user) {
@@ -111,7 +133,8 @@ public class JobController {
         int count = applicationRepository.countByJob__id(job.get_id());
         dto.setApplicationCount(count);
 
-        Application app = applicationRepository.findByJob__idAndApplicant__id(job.get_id(), user != null ? user.get_id() : null);
+        Application app = applicationRepository.findByJob__idAndApplicant__id(job.get_id(),
+                user != null ? user.get_id() : null);
         String applicationStatus = null;
         if (app != null && app.getStatus() != null) {
             applicationStatus = app.getStatus().name().replace("_", " ");
@@ -124,12 +147,12 @@ public class JobController {
     private JobResponseDTO mapToResponseDTO(Job job) {
         return mapToResponseDTO(job, null);
     }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('jobseeker')")
     public ResponseEntity<JobResponseDTO> getJobById(
             @PathVariable("id") Long id,
-            @RequestHeader("Authorization") String token
-    ) {
+            @RequestHeader("Authorization") String token) {
         Job job = jobRepository.findById(id).orElse(null);
         if (job == null) {
             return ResponseEntity.notFound().build();
@@ -138,8 +161,6 @@ public class JobController {
         User user = userRepository.findByEmail(email);
         return ResponseEntity.ok(mapToResponseDTO(job, user));
     }
-
-
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('EMPLOYER')")
@@ -171,7 +192,6 @@ public class JobController {
         return ResponseEntity.ok(mapToResponseDTO(job));
     }
 
-
     @GetMapping("/get-jobs-employer")
     @PreAuthorize("hasRole('EMPLOYER')")
     public ResponseEntity<List<JobResponseDTO>> getJobsByEmployerToken(@RequestHeader("Authorization") String token) {
@@ -193,7 +213,6 @@ public class JobController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(jobDTOs);
     }
-
 
     @PutMapping("/{id}/toggle-close")
     @PreAuthorize("hasRole('EMPLOYER')")
@@ -217,9 +236,7 @@ public class JobController {
         return ResponseEntity.ok(mapToResponseDTO(job));
     }
 
-
     // src/main/java/com/wells/recruiting/platform/recruiting/platform/controler/JobController.java
-
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('EMPLOYER')")
@@ -244,7 +261,5 @@ public class JobController {
         jobRepository.delete(job);
         return ResponseEntity.noContent().build();
     }
-
-
 
 }
