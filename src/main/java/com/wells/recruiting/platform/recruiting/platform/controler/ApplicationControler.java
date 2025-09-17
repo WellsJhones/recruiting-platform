@@ -43,8 +43,7 @@ public class ApplicationControler {
     @PostMapping("/{jobId}")
     public ResponseEntity<?> applyToJob(
             @RequestHeader("Authorization") String token,
-            @PathVariable String jobId
-    ) {
+            @PathVariable String jobId) {
         String email = tokenService.getEmailFromToken(token.replace("Bearer ", ""));
         User user = userRepository.findByEmail(email);
 
@@ -101,6 +100,7 @@ public class ApplicationControler {
             applicantMap.put("name", app.getApplicant().getName());
             applicantMap.put("email", app.getApplicant().getEmail());
             applicantMap.put("avatar", app.getApplicant().getAvatar());
+            applicantMap.put("resume", app.getApplicant().getResume());
             dto.setApplicant(applicantMap);
             dto.setStatus(app.getStatus());
             dto.setCreatedAt(app.getCreatedAt().toString());
@@ -113,7 +113,9 @@ public class ApplicationControler {
                 jobDto.setTitle(app.getJob().getTitle());
                 jobDto.setLocation(app.getJob().getLocation());
                 jobDto.setType(app.getJob().getType());
-                jobDto.setCompany(app.getJob().getEmployer() != null ? String.valueOf(app.getJob().getEmployer().get_id()) : null);
+                jobDto.setCompany(
+                        app.getJob().getEmployer() != null ? String.valueOf(app.getJob().getEmployer().get_id())
+                                : null);
                 jobDto.setApplicationCount(app.getJob().getApplicationCount());
 
                 dto.setJob(jobDto);
@@ -128,8 +130,7 @@ public class ApplicationControler {
     @GetMapping("/job/{id}")
     public ResponseEntity<?> getApplicantsForJob(
             @RequestHeader("Authorization") String token,
-            @PathVariable String id
-    ) {
+            @PathVariable String id) {
         String email = tokenService.getEmailFromToken(token.replace("Bearer ", ""));
         Employer employer = employerRepository.findByEmail(email);
 
@@ -156,14 +157,13 @@ public class ApplicationControler {
             applicantMap.put("name", app.getApplicant().getName());
             applicantMap.put("email", app.getApplicant().getEmail());
             applicantMap.put("avatar", app.getApplicant().getAvatar());
+            applicantMap.put("resume", app.getApplicant().getResume());
             dto.setApplicant(applicantMap);
 
             dto.setStatus(
                     app.getStatus() != null
                             ? app.getStatus()
-                            : Status.APPLIED
-            );
-
+                            : Status.APPLIED);
 
             dto.setCreatedAt(app.getCreatedAt().toString());
             dto.setUpdatedAt(app.getUpdatedAt().toString());
@@ -175,7 +175,9 @@ public class ApplicationControler {
                 jobDto.setTitle(app.getJob().getTitle());
                 jobDto.setLocation(app.getJob().getLocation());
                 jobDto.setType(app.getJob().getType());
-                jobDto.setCompany(app.getJob().getEmployer() != null ? String.valueOf(app.getJob().getEmployer().get_id()) : null);
+                jobDto.setCompany(
+                        app.getJob().getEmployer() != null ? String.valueOf(app.getJob().getEmployer().get_id())
+                                : null);
                 jobDto.setApplicationCount(app.getJob().getApplicationCount());
                 dto.setJob(jobDto);
             }
@@ -189,8 +191,7 @@ public class ApplicationControler {
     public ResponseEntity<?> updateApplicationStatus(
             @RequestHeader("Authorization") String token,
             @PathVariable String id,
-            @RequestBody Map<String, String> payload
-    ) {
+            @RequestBody Map<String, String> payload) {
         String email = tokenService.getEmailFromToken(token.replace("Bearer ", ""));
         Employer employer = employerRepository.findByEmail(email);
 
@@ -214,12 +215,10 @@ public class ApplicationControler {
         try {
             application.setStatus(Status.valueOf(newStatus.toUpperCase().replace(" ", "_")));
 
-
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body("Invalid status value");
         }
         applicationRepository.save(application);
-
 
         return ResponseEntity.ok("Status updated");
     }

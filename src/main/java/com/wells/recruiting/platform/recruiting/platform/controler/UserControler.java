@@ -18,7 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 @RestController
 @RequestMapping("/api")
 public class UserControler {
@@ -36,8 +36,7 @@ public class UserControler {
     @Transactional
     public ResponseEntity<Object> registerUser(
             @RequestBody Map<String, Object> payload,
-            @RequestParam(value = "image", required = false) MultipartFile image
-    ) {
+            @RequestParam(value = "image", required = false) MultipartFile image) {
         String name = (String) payload.get("name");
         String email = (String) payload.get("email");
         String password = (String) payload.get("password");
@@ -62,10 +61,11 @@ public class UserControler {
             }
             // Sanitize the original filename
             String originalName = image.getOriginalFilename();
-            String sanitized = originalName == null ? "file" : originalName
-                    .toLowerCase()
-                    .replaceAll("\\s+", "_")
-                    .replaceAll("[^a-z0-9._-]", "");
+            String sanitized = originalName == null ? "file"
+                    : originalName
+                            .toLowerCase()
+                            .replaceAll("\\s+", "_")
+                            .replaceAll("[^a-z0-9._-]", "");
             String fileName = System.currentTimeMillis() + "-" + sanitized;
             File dest = new File(dir, fileName);
 
@@ -102,8 +102,7 @@ public class UserControler {
                     employer.getCompanyName(),
                     employer.getCompanyDescription(),
                     employer.getCompanyLogo(),
-                    tokenJWT
-            );
+                    tokenJWT);
             return ResponseEntity.ok(response);
         } else if ("jobseeker".equalsIgnoreCase(role)) {
             User user = new User();
@@ -121,14 +120,12 @@ public class UserControler {
                     user.getName(),
                     user.getEmail(),
                     user.getRole(),
-                    tokenJWT
-            );
+                    tokenJWT);
             return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.badRequest().body("Invalid role");
         }
     }
-
 
     @GetMapping("/auth/me")
     public ResponseEntity<?> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
@@ -161,6 +158,7 @@ public class UserControler {
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
+
     @GetMapping("/user/{id}")
     public ResponseEntity<?> getPublicUserInfo(@PathVariable("id") String id) {
         try {
@@ -180,8 +178,7 @@ public class UserControler {
                         employer.getCompanyName(),
                         employer.getCompanyDescription(),
                         employer.getCompanyLogo(),
-                        employer.getAvatar()
-                );
+                        employer.getAvatar());
                 return ResponseEntity.ok(response);
             }
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
@@ -190,14 +187,15 @@ public class UserControler {
         }
     }
 
-// In src/main/java/com/wells/recruiting/platform/recruiting/platform/controler/UserControler.java
+    // In
+    // src/main/java/com/wells/recruiting/platform/recruiting/platform/controler/UserControler.java
 
-    @PutMapping("/user/profile")
+    // JSON version
+    @PutMapping(value = "/user/profile", consumes = { "application/json" })
     @Transactional
-    public ResponseEntity<?> updateUserProfile(
+    public ResponseEntity<?> updateUserProfileJson(
             @RequestHeader("Authorization") String authHeader,
-            @RequestBody Map<String, Object> payload
-    ) {
+            @RequestBody Map<String, Object> payload) {
         String token = authHeader.replace("Bearer ", "");
         String email = tokenService.extractEmail(token);
         String role = tokenService.extractRole(token);
@@ -222,8 +220,7 @@ public class UserControler {
                     employer.getCompanyName(),
                     employer.getCompanyDescription(),
                     employer.getCompanyLogo(),
-                    employer.getAvatar()
-            ));
+                    employer.getAvatar()));
         } else if ("jobseeker".equalsIgnoreCase(role)) {
             User user = repository.findByEmail(email);
             if (user == null) {
@@ -240,6 +237,108 @@ public class UserControler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid role");
     }
 
+    // Multipart version
+    @PutMapping(value = "/user/profile", consumes = { "multipart/form-data" })
+    @Transactional
+    public ResponseEntity<?> updateUserProfileMultipart(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestPart(value = "data", required = false) Map<String, Object> payload,
+            @RequestPart(value = "resume", required = false) MultipartFile resumeFile) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = tokenService.extractEmail(token);
+        String role = tokenService.extractRole(token);
 
+        if ("employer".equalsIgnoreCase(role)) {
+            Employer employer = employerRepository.findByEmail(email);
+            if (employer == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            if (payload != null) {
+                employer.setCompanyName((String) payload.get("companyName"));
+                employer.setCompanyDescription((String) payload.get("companyDescription"));
+                employer.setCompanyLogo((String) payload.get("companyLogo"));
+                employer.setAvatar((String) payload.get("avatar"));
+                employer.setName((String) payload.get("name"));
+            }
+            employer.setUpdatedAt(new java.util.Date());
+            employerRepository.save(employer);
+            return ResponseEntity.ok(new DataDetailsEmployer(
+                    employer.get_id(),
+                    employer.getName(),
+                    employer.getEmail(),
+                    employer.getRole(),
+                    employer.getCompanyName(),
+                    employer.getCompanyDescription(),
+                    employer.getCompanyLogo(),
+                    employer.getAvatar()));
+        } else if ("jobseeker".equalsIgnoreCase(role)) {
+            User user = repository.findByEmail(email);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            if (payload != null) {
+                user.setName((String) payload.get("name"));
+                user.setAvatar((String) payload.get("avatar"));
+            }
+            String resumeUrl = null;
+            if (resumeFile != null && !resumeFile.isEmpty()) {
+                String contentType = resumeFile.getContentType();
+                if (contentType == null ||
+                        !(contentType.equals("application/pdf") ||
+                                contentType.equals("application/msword") ||
+                                contentType.equals(
+                                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))) {
+                    return ResponseEntity.badRequest().body(java.util.Map.of("error", "Invalid resume file type"));
+                }
+                String uploadDir = "C:\\Users\\Wells\\Documents\\uploads\\resumes";
+                File dir = new File(uploadDir);
+                if (!dir.exists() && !dir.mkdirs()) {
+                    return ResponseEntity.status(500)
+                            .body(java.util.Map.of("error", "Failed to create upload directory"));
+                }
+                String originalName = resumeFile.getOriginalFilename();
+                String sanitized = originalName == null ? "resume"
+                        : originalName
+                                .toLowerCase()
+                                .replaceAll("\\s+", "_")
+                                .replaceAll("[^a-z0-9._-]", "");
+                String fileName = System.currentTimeMillis() + "-" + sanitized;
+                File dest = new File(dir, fileName);
+                try {
+                    resumeFile.transferTo(dest);
+                    resumeUrl = "http://localhost:8000/uploads/resumes/" + fileName;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return ResponseEntity.status(500).body(java.util.Map.of("error", "Resume upload failed"));
+                }
+            } else if (payload != null && payload.get("resume") != null) {
+                resumeUrl = (String) payload.get("resume");
+            }
+            user.setResume(resumeUrl);
+            user.setUpdatedAt(java.time.Instant.now());
+            user.setVersion(user.getVersion() == null ? 1 : user.getVersion() + 1);
+            repository.save(user);
+            return ResponseEntity.ok(new DataDetailsUser(user));
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid role");
+    }
 
+    @PostMapping("/user/resume")
+    @Transactional
+    public ResponseEntity<?> deleteResumePost(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = tokenService.extractEmail(token);
+        String role = tokenService.extractRole(token);
+        if (!"jobseeker".equalsIgnoreCase(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only jobseekers can delete resume");
+        }
+        User user = repository.findByEmail(email);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+        }
+        user.setResume(null);
+        user.setUpdatedAt(java.time.Instant.now());
+        repository.save(user);
+        return ResponseEntity.ok(java.util.Map.of("message", "Resume deleted"));
+    }
 }

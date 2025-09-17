@@ -16,7 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin(origins = "*") // or specify allowed origins
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 @RestController
 @RequestMapping("/api/auth/login")
 public class AuthenticationController {
@@ -48,8 +48,7 @@ public class AuthenticationController {
                     user.getRole(),
                     user.getAvatar(),
                     user.getResume(),
-                    tokenJWT
-            );
+                    tokenJWT);
             return ResponseEntity.ok(response);
         }
 
@@ -60,7 +59,7 @@ public class AuthenticationController {
             }
             String tokenJWT = tokenService.generateToken(employer);
             EmployerFullDTO response = new EmployerFullDTO(
-                    String.valueOf( employer.get_id() ),
+                    String.valueOf(employer.get_id()),
                     employer.getName(),
                     employer.getEmail(),
                     employer.getRole(),
@@ -68,13 +67,11 @@ public class AuthenticationController {
                     employer.getCompanyName(),
                     employer.getCompanyDescription(),
                     employer.getCompanyLogo(),
-                    tokenJWT
-            );
+                    tokenJWT);
             return ResponseEntity.ok(response);
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
-
 
 }
