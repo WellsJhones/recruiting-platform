@@ -8,6 +8,8 @@ import com.wells.recruiting.platform.recruiting.platform.repository.UserReposito
 import com.wells.recruiting.platform.recruiting.platform.security.DataTokenJWT;
 import com.wells.recruiting.platform.recruiting.platform.security.TokenService;
 import com.wells.recruiting.platform.recruiting.platform.user.User;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -72,6 +74,39 @@ public class AuthenticationController {
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    @PostMapping("/auth/refresh")
+    public ResponseEntity<?> refreshJwt(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        DecodedJWT jwt;
+        try {
+            jwt = tokenService.verifyTokenIgnoreExpiration(token);
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("Invalid token");
+        }
+        String email = jwt.getSubject();
+        String role = jwt.getClaim("role").asString();
+        if (role == null || email == null) {
+            return ResponseEntity.status(401).body("Invalid token claims");
+        }
+        if ("employer".equalsIgnoreCase(role)) {
+            Employer employer = employerRepository.findByEmail(email);
+            if (employer == null) {
+                return ResponseEntity.status(401).body("Employer not found");
+            }
+            String newToken = tokenService.generateToken(employer);
+            return ResponseEntity.ok(java.util.Map.of("token", newToken));
+        } else if ("jobseeker".equalsIgnoreCase(role)) {
+            User user = userRepository.findByEmail(email);
+            if (user == null) {
+                return ResponseEntity.status(401).body("User not found");
+            }
+            String newToken = tokenService.generateToken(user);
+            return ResponseEntity.ok(java.util.Map.of("token", newToken));
+        } else {
+            return ResponseEntity.status(401).body("Unknown role");
+        }
     }
 
 }

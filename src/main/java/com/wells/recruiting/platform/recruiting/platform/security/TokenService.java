@@ -31,7 +31,6 @@ public class TokenService {
         }
     }
 
-
     // Overload for Employer, now includes role claim
     public String generateToken(Employer employer) {
         try {
@@ -85,5 +84,18 @@ public class TokenService {
 
     public String extractRole(String token) {
         return getRoleFromToken(token);
+    }
+
+    // Accepts expired tokens for refresh
+    public DecodedJWT verifyTokenIgnoreExpiration(String tokenJWT) {
+        try {
+            var algoritmo = Algorithm.HMAC256(secret);
+            var verifier = JWT.require(algoritmo)
+                    .acceptExpiresAt(0) // disables expiration check
+                    .build();
+            return verifier.verify(tokenJWT);
+        } catch (Exception e) {
+            throw new RuntimeException("erro ao verificar token jwt (ignore expiration) " + e);
+        }
     }
 }
