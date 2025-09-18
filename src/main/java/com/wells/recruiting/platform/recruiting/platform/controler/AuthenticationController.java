@@ -18,7 +18,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+@CrossOrigin(origins = { "http://localhost:5173", "http://wellsjhones.com.br",
+        "http://164.152.61.249" }, allowCredentials = "true")
 @RestController
 @RequestMapping("/api/auth/login")
 public class AuthenticationController {

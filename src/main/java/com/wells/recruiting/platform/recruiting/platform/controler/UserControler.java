@@ -54,7 +54,7 @@ public class UserControler {
 
         String imagePath = null;
         if (image != null && !image.isEmpty()) {
-            String uploadDir = "C:\\Users\\Wells\\Documents\\uploads";
+            String uploadDir = "/mnt/my_files";
             File dir = new File(uploadDir);
             if (!dir.exists() && !dir.mkdirs()) {
                 return ResponseEntity.status(500).body("Failed to create upload directory");
@@ -71,7 +71,7 @@ public class UserControler {
 
             try {
                 image.transferTo(dest);
-                String imageUrl = "http://localhost:8000/uploads/" + fileName;
+                String imageUrl = "http://164.152.61.249:8000/uploads/" + fileName;
                 imagePath = imageUrl;
             } catch (IOException e) {
                 return ResponseEntity.status(500).body("Image upload failed");
@@ -290,7 +290,7 @@ public class UserControler {
                                         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))) {
                     return ResponseEntity.badRequest().body(java.util.Map.of("error", "Invalid resume file type"));
                 }
-                String uploadDir = "C:\\Users\\Wells\\Documents\\uploads\\resumes";
+                String uploadDir = "/mnt/my_files/resume/";
                 File dir = new File(uploadDir);
                 if (!dir.exists() && !dir.mkdirs()) {
                     return ResponseEntity.status(500)
@@ -306,7 +306,7 @@ public class UserControler {
                 File dest = new File(dir, fileName);
                 try {
                     resumeFile.transferTo(dest);
-                    resumeUrl = "http://localhost:8000/uploads/resumes/" + fileName;
+                    resumeUrl = "http://164.152.61.249:8000/uploads/resume/" + fileName;
                 } catch (IOException e) {
                     e.printStackTrace();
                     return ResponseEntity.status(500).body(java.util.Map.of("error", "Resume upload failed"));
