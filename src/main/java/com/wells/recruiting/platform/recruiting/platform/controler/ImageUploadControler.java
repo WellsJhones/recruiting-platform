@@ -28,7 +28,7 @@ public class ImageUploadControler {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", "Invalid file type"));
         }
 
-        String uploadDir = "/mnt/my_files";
+        String uploadDir = "/var/www/html/uploads";
         File dir = new File(uploadDir);
         if (!dir.exists() && !dir.mkdirs()) {
             return ResponseEntity.status(500).body(java.util.Map.of("error", "Failed to create upload directory"));
@@ -47,7 +47,7 @@ public class ImageUploadControler {
 
         try {
             file.transferTo(dest);
-            String imageUrl = "http://164.152.61.249:8000/uploads/" + fileName;
+            String imageUrl = "https://wellsjhones.com.br/uploads/" + fileName;
             return ResponseEntity.ok(java.util.Map.of("imageUrl", imageUrl));
 
         } catch (IOException e) {

@@ -1,27 +1,36 @@
 // Java
 package com.wells.recruiting.platform.recruiting.platform.controler;
 
-import com.wells.recruiting.platform.recruiting.platform.company.Employer;
-import com.wells.recruiting.platform.recruiting.platform.dto.*;
-import com.wells.recruiting.platform.recruiting.platform.repository.EmployerRepository;
-import com.wells.recruiting.platform.recruiting.platform.repository.UserRepository;
-import com.wells.recruiting.platform.recruiting.platform.security.DataTokenJWT;
-import com.wells.recruiting.platform.recruiting.platform.security.TokenService;
-import com.wells.recruiting.platform.recruiting.platform.user.User;
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.interfaces.DecodedJWT;
-import jakarta.validation.Valid;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.wells.recruiting.platform.recruiting.platform.company.Employer;
+import com.wells.recruiting.platform.recruiting.platform.dto.DataAuthentication;
+import com.wells.recruiting.platform.recruiting.platform.dto.EmployerFullDTO;
+import com.wells.recruiting.platform.recruiting.platform.dto.UserFullDTO;
+import com.wells.recruiting.platform.recruiting.platform.repository.EmployerRepository;
+import com.wells.recruiting.platform.recruiting.platform.repository.UserRepository;
+import com.wells.recruiting.platform.recruiting.platform.security.TokenService;
+import com.wells.recruiting.platform.recruiting.platform.service.EmailService;
+import com.wells.recruiting.platform.recruiting.platform.user.User;
+
+import jakarta.validation.Valid;
 
 @CrossOrigin(origins = { "http://localhost:5173", "http://wellsjhones.com.br",
-        "http://164.152.61.249" }, allowCredentials = "true")
+        "http://164.152.61.249", "https://wellsjhones.com.br" }, allowCredentials = "true")
 @RestController
-@RequestMapping("/api/auth/login")
+@RequestMapping("/api/auth")
 public class AuthenticationController {
 
     @Autowired
@@ -36,7 +45,10 @@ public class AuthenticationController {
     @Autowired
     private EmployerRepository employerRepository;
 
-    @PostMapping
+    @Autowired
+    private EmailService emailService;
+
+    @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @Valid DataAuthentication dados) {
         User user = userRepository.findByEmail(dados.email());
         if (user != null) {
@@ -77,7 +89,7 @@ public class AuthenticationController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
-    @PostMapping("/auth/refresh")
+    @PostMapping("/refresh")
     public ResponseEntity<?> refreshJwt(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.replace("Bearer ", "");
         DecodedJWT jwt;
@@ -108,6 +120,28 @@ public class AuthenticationController {
         } else {
             return ResponseEntity.status(401).body("Unknown role");
         }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> recoverPassword(@RequestBody Map<String, String> payload) {
+        String email = payload.get("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body("Email is required");
+        }
+        User user = userRepository.findByEmail(email);
+        Employer employer = employerRepository.findByEmail(email);
+        if (user == null && employer == null) {
+            // For security, do not reveal if email exists
+            return ResponseEntity.ok("If the email exists, a recovery link will be sent.");
+        }
+        // Generate a recovery token (for demo, use a UUID)
+        String token = java.util.UUID.randomUUID().toString();
+        // TODO: Save token and associate with user/employer, set expiration
+        String recoveryLink = "https://164.152.61.249/reset-password?token=" + token;
+        // Send recovery email
+        emailService.sendPasswordResetEmail(email, recoveryLink);
+        // Respond generically
+        return ResponseEntity.ok("If the email exists, a recovery link will be sent.");
     }
 
 }

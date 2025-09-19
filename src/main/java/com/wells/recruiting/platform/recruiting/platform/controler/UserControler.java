@@ -18,7 +18,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+@CrossOrigin(origins = { "http://localhost:5173", "http://wellsjhones.com.br", "http://164.152.61.249",
+        "https://wellsjhones.com.br" }, allowCredentials = "true")
 @RestController
 @RequestMapping("/api")
 public class UserControler {
@@ -54,7 +55,7 @@ public class UserControler {
 
         String imagePath = null;
         if (image != null && !image.isEmpty()) {
-            String uploadDir = "/mnt/my_files";
+            String uploadDir = "/var/www/html/uploads";
             File dir = new File(uploadDir);
             if (!dir.exists() && !dir.mkdirs()) {
                 return ResponseEntity.status(500).body("Failed to create upload directory");
@@ -71,7 +72,7 @@ public class UserControler {
 
             try {
                 image.transferTo(dest);
-                String imageUrl = "http://164.152.61.249:8000/uploads/" + fileName;
+                String imageUrl = "http://wellsjhones.com.br/uploads/" + fileName;
                 imagePath = imageUrl;
             } catch (IOException e) {
                 return ResponseEntity.status(500).body("Image upload failed");
@@ -290,7 +291,7 @@ public class UserControler {
                                         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))) {
                     return ResponseEntity.badRequest().body(java.util.Map.of("error", "Invalid resume file type"));
                 }
-                String uploadDir = "/mnt/my_files/resume/";
+                String uploadDir = "/var/www/html/uploads/resume/";
                 File dir = new File(uploadDir);
                 if (!dir.exists() && !dir.mkdirs()) {
                     return ResponseEntity.status(500)
@@ -306,7 +307,7 @@ public class UserControler {
                 File dest = new File(dir, fileName);
                 try {
                     resumeFile.transferTo(dest);
-                    resumeUrl = "http://164.152.61.249:8000/uploads/resume/" + fileName;
+                    resumeUrl = "http://wellsjhones.com.br/uploads/resume/" + fileName;
                 } catch (IOException e) {
                     e.printStackTrace();
                     return ResponseEntity.status(500).body(java.util.Map.of("error", "Resume upload failed"));
