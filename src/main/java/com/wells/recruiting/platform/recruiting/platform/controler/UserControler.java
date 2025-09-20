@@ -60,19 +60,18 @@ public class UserControler {
             if (!dir.exists() && !dir.mkdirs()) {
                 return ResponseEntity.status(500).body("Failed to create upload directory");
             }
-            // Sanitize the original filename
+            // Generate a random filename with the original extension
+            String extension = "";
             String originalName = image.getOriginalFilename();
-            String sanitized = originalName == null ? "file"
-                    : originalName
-                            .toLowerCase()
-                            .replaceAll("\\s+", "_")
-                            .replaceAll("[^a-z0-9._-]", "");
-            String fileName = System.currentTimeMillis() + "-" + sanitized;
+            if (originalName != null && originalName.contains(".")) {
+                extension = originalName.substring(originalName.lastIndexOf("."));
+            }
+            String fileName = java.util.UUID.randomUUID().toString() + extension;
             File dest = new File(dir, fileName);
 
             try {
                 image.transferTo(dest);
-                String imageUrl = "http://localhost:8000/uploads/" + fileName;
+                String imageUrl = "http://wellsjhones.com.br/uploads/" + fileName;
                 imagePath = imageUrl;
             } catch (IOException e) {
                 return ResponseEntity.status(500).body("Image upload failed");
@@ -291,23 +290,23 @@ public class UserControler {
                                         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))) {
                     return ResponseEntity.badRequest().body(java.util.Map.of("error", "Invalid resume file type"));
                 }
-                String uploadDir = "C:\\Users\\Wells\\Documents\\uploads\\resume";
+                String uploadDir = "/var/www/html/uploads/resume/";
                 File dir = new File(uploadDir);
                 if (!dir.exists() && !dir.mkdirs()) {
                     return ResponseEntity.status(500)
                             .body(java.util.Map.of("error", "Failed to create upload directory"));
                 }
+                // Generate a random filename with the original extension
+                String extension = "";
                 String originalName = resumeFile.getOriginalFilename();
-                String sanitized = originalName == null ? "resume"
-                        : originalName
-                                .toLowerCase()
-                                .replaceAll("\\s+", "_")
-                                .replaceAll("[^a-z0-9._-]", "");
-                String fileName = System.currentTimeMillis() + "-" + sanitized;
+                if (originalName != null && originalName.contains(".")) {
+                    extension = originalName.substring(originalName.lastIndexOf("."));
+                }
+                String fileName = java.util.UUID.randomUUID().toString() + extension;
                 File dest = new File(dir, fileName);
                 try {
                     resumeFile.transferTo(dest);
-                    resumeUrl = "http://localhost:8000/uploads/" + fileName;
+                    resumeUrl = "/var/www/html/uploads/resume/"; + fileName;
                 } catch (IOException e) {
                     e.printStackTrace();
                     return ResponseEntity.status(500).body(java.util.Map.of("error", "Resume upload failed"));
