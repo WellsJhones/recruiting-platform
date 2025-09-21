@@ -18,6 +18,22 @@ import com.wells.recruiting.platform.recruiting.platform.company.Employer;
         "https://wellsjhones.com.br" }, allowCredentials = "true")
 public class AdmController {
 
+    // Disable an employer
+    @PutMapping("/employers/{id}/disable")
+    public Employer disableEmployer(@PathVariable Long id) {
+        Employer employer = employerRepository.findById(id).orElseThrow();
+        employer.setActive(false);
+        return employerRepository.save(employer);
+    }
+
+    // Enable an employer
+    @PutMapping("/employers/{id}/enable")
+    public Employer enableEmployer(@PathVariable Long id) {
+        Employer employer = employerRepository.findById(id).orElseThrow();
+        employer.setActive(true);
+        return employerRepository.save(employer);
+    }
+
     // Disable a user
     @PutMapping("/users/{id}/disable")
     public User disableUser(@PathVariable Long id) {

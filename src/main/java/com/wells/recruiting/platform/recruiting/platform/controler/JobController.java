@@ -100,6 +100,8 @@ public class JobController {
 
         List<Job> jobs = jobRepository.findByIsClosedFalse();
         List<Job> filtered = jobs.stream()
+                // Hide jobs from disabled employers
+                .filter(job -> job.getEmployer() != null && job.getEmployer().isActive())
                 .filter(job -> filterKeyword == null
                         || (job.getTitle() != null && job.getTitle().toLowerCase().contains(filterKeyword))
                         || (job.getDescription() != null && job.getDescription().toLowerCase().contains(filterKeyword)))
