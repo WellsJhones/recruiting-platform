@@ -52,6 +52,9 @@ public class AuthenticationController {
     public ResponseEntity<?> login(@RequestBody @Valid DataAuthentication dados) {
         User user = userRepository.findByEmail(dados.email());
         if (user != null) {
+            if (!user.isActive()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Account disabled");
+            }
             if (!passwordEncoder.matches(dados.password(), user.getPassword())) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
