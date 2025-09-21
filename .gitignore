@@ -32,3 +32,4 @@ build/
 ### VS Code ###
 .vscode/
 e.txt
+nginx_uploads_blocklist.conf

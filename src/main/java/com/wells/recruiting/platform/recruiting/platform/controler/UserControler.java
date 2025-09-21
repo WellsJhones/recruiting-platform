@@ -55,7 +55,7 @@ public class UserControler {
 
         String imagePath = null;
         if (image != null && !image.isEmpty()) {
-            String uploadDir = "C:\\Users\\Wells\\Documents\\uploads";
+            String uploadDir = "/var/www/html/uploads";
             File dir = new File(uploadDir);
             if (!dir.exists() && !dir.mkdirs()) {
                 return ResponseEntity.status(500).body("Failed to create upload directory");
@@ -70,7 +70,20 @@ public class UserControler {
             File dest = new File(dir, fileName);
 
             try {
-                image.transferTo(dest);
+                // Validate and re-encode image to strip payloads
+                javax.imageio.ImageIO.setUseCache(false);
+                java.awt.image.BufferedImage img = javax.imageio.ImageIO.read(image.getInputStream());
+                if (img == null) {
+                    return ResponseEntity.badRequest().body("Invalid image file");
+                }
+                // Default to png if extension is not a supported format
+                String format = extension.replace(".", "").toLowerCase();
+                if (!(format.equals("png") || format.equals("jpg") || format.equals("jpeg") || format.equals("gif"))) {
+                    format = "png";
+                    fileName = java.util.UUID.randomUUID().toString() + ".png";
+                    dest = new File(dir, fileName);
+                }
+                javax.imageio.ImageIO.write(img, format, dest);
                 String imageUrl = "http://wellsjhones.com.br/uploads/" + fileName;
                 imagePath = imageUrl;
             } catch (IOException e) {
@@ -283,12 +296,9 @@ public class UserControler {
             String resumeUrl = null;
             if (resumeFile != null && !resumeFile.isEmpty()) {
                 String contentType = resumeFile.getContentType();
-                if (contentType == null ||
-                        !(contentType.equals("application/pdf") ||
-                                contentType.equals("application/msword") ||
-                                contentType.equals(
-                                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))) {
-                    return ResponseEntity.badRequest().body(java.util.Map.of("error", "Invalid resume file type"));
+                if (contentType == null || !contentType.equals("application/pdf")) {
+                    return ResponseEntity.badRequest()
+                            .body(java.util.Map.of("error", "Invalid resume file type (PDF only)"));
                 }
                 String uploadDir = "/var/www/html/uploads/resume/";
                 File dir = new File(uploadDir);
@@ -297,19 +307,18 @@ public class UserControler {
                             .body(java.util.Map.of("error", "Failed to create upload directory"));
                 }
                 // Generate a random filename with the original extension
-                String extension = "";
-                String originalName = resumeFile.getOriginalFilename();
-                if (originalName != null && originalName.contains(".")) {
-                    extension = originalName.substring(originalName.lastIndexOf("."));
-                }
+                String extension = ".pdf";
                 String fileName = java.util.UUID.randomUUID().toString() + extension;
                 File dest = new File(dir, fileName);
-                try {
-                    resumeFile.transferTo(dest);
-                    resumeUrl = "/var/www/html/uploads/resume/"; + fileName;
-                } catch (IOException e) {
+                try (org.apache.pdfbox.pdmodel.PDDocument doc = org.apache.pdfbox.pdmodel.PDDocument
+                        .load(resumeFile.getInputStream())) {
+                    // Save a sanitized copy
+                    doc.save(dest);
+                    resumeUrl = "http://wellsjhones.com.br/uploads/resume/" + fileName;
+                } catch (Exception e) {
                     e.printStackTrace();
-                    return ResponseEntity.status(500).body(java.util.Map.of("error", "Resume upload failed"));
+                    return ResponseEntity.status(500)
+                            .body(java.util.Map.of("error", "Resume upload failed or invalid PDF"));
                 }
             } else if (payload != null && payload.get("resume") != null) {
                 resumeUrl = (String) payload.get("resume");

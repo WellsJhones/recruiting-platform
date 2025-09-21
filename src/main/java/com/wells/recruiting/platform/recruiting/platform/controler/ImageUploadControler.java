@@ -45,7 +45,20 @@ public class ImageUploadControler {
         File dest = new File(dir, fileName);
 
         try {
-            file.transferTo(dest);
+            // Validate and re-encode image to strip payloads
+            javax.imageio.ImageIO.setUseCache(false);
+            java.awt.image.BufferedImage img = javax.imageio.ImageIO.read(file.getInputStream());
+            if (img == null) {
+                return ResponseEntity.badRequest().body(java.util.Map.of("error", "Invalid image file"));
+            }
+            // Default to png if extension is not a supported format
+            String format = extension.replace(".", "").toLowerCase();
+            if (!(format.equals("png") || format.equals("jpg") || format.equals("jpeg") || format.equals("gif"))) {
+                format = "png";
+                fileName = java.util.UUID.randomUUID().toString() + ".png";
+                dest = new File(dir, fileName);
+            }
+            javax.imageio.ImageIO.write(img, format, dest);
             String imageUrl = "http://wellsjhones.com.br/uploads/" + fileName;
             return ResponseEntity.ok(java.util.Map.of("imageUrl", imageUrl));
 
