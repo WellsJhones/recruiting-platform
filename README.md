@@ -44,7 +44,7 @@ This project is a Spring Boot-based recruiting platform with RESTful APIs for us
 
 ## Static File Serving
 
-- Nginx serves files from `/var/www/html/uploads` at `http://wellsjhones.com.br/uploads/`
+- Nginx serves files from `/var/www/html/uploads` 
 - Uploaded images are accessible via public URLs returned by the API
 
 ## Database Scripts
