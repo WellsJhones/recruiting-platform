@@ -66,8 +66,8 @@ public class JobController {
             @RequestHeader("Authorization") String token,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String location,
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String type,
+            @RequestParam(required = false) List<String> category,
+            @RequestParam(required = false) List<String> type,
             @RequestParam(required = false) Integer minSalary,
             @RequestParam(required = false) Integer maxSalary,
             @RequestParam(required = false) String userId,
@@ -75,22 +75,49 @@ public class JobController {
             @RequestParam(required = false) Boolean remoteOnly) {
         String email = tokenService.getEmailFromToken(token.replace("Bearer ", ""));
         User user = userRepository.findByEmail(email);
+        // Normalize empty string filters to null and assign to final variables
+        final String normKeyword = (keyword != null && keyword.trim().isEmpty()) ? null : keyword;
+        final String normLocation = (location != null && location.trim().isEmpty()) ? null : location;
+        final List<String> normCategory = (category != null && category.isEmpty()) ? null : category;
+        final List<String> normType = (type != null && type.isEmpty()) ? null : type;
+        final String normExperience = (experience != null && experience.trim().isEmpty()) ? null : experience;
+
+        // Lowercase and trim all filters for robust matching
+        final String filterKeyword = normKeyword != null ? normKeyword.trim().toLowerCase() : null;
+        final String filterLocation = normLocation != null ? normLocation.trim().toLowerCase() : null;
+        // Normalize category and type lists: remove spaces/dashes, lowercase
+        final List<String> filterCategories = (category != null && !category.isEmpty())
+                ? category.stream().filter(s -> s != null && !s.trim().isEmpty())
+                        .map(s -> s.trim().replaceAll("[\\s\\-]+", "").toLowerCase())
+                        .toList()
+                : null;
+        final List<String> filterTypes = (type != null && !type.isEmpty())
+                ? type.stream().filter(s -> s != null && !s.trim().isEmpty())
+                        .map(s -> s.trim().toLowerCase())
+                        .toList()
+                : null;
+        final String filterExperience = normExperience != null ? normExperience.trim().toLowerCase() : null;
+
         List<Job> jobs = jobRepository.findByIsClosedFalse();
         List<Job> filtered = jobs.stream()
-                .filter(job -> keyword == null || job.getTitle().toLowerCase().contains(keyword.toLowerCase())
-                        || (job.getDescription() != null
-                                && job.getDescription().toLowerCase().contains(keyword.toLowerCase())))
-                .filter(job -> location == null
-                        || (job.getLocation() != null && job.getLocation().equalsIgnoreCase(location)))
-                .filter(job -> category == null
-                        || (job.getCategory() != null && job.getCategory().equalsIgnoreCase(category)))
-                .filter(job -> type == null || (job.getType() != null && job.getType().equalsIgnoreCase(type)))
+                .filter(job -> filterKeyword == null
+                        || (job.getTitle() != null && job.getTitle().toLowerCase().contains(filterKeyword))
+                        || (job.getDescription() != null && job.getDescription().toLowerCase().contains(filterKeyword)))
+                .filter(job -> filterLocation == null
+                        || (job.getLocation() != null && job.getLocation().trim().toLowerCase().equals(filterLocation)))
+                .filter(job -> filterCategories == null
+                        || (job.getCategory() != null && filterCategories
+                                .contains(job.getCategory().trim().replaceAll("[\\s\\-]+", "").toLowerCase())))
+                .filter(job -> filterTypes == null
+                        || (job.getType() != null && filterTypes.contains(job.getType().trim().toLowerCase())))
                 .filter(job -> minSalary == null || (job.getSalaryMin() != null && job.getSalaryMin() >= minSalary))
                 .filter(job -> maxSalary == null || (job.getSalaryMax() != null && job.getSalaryMax() <= maxSalary))
-                .filter(job -> experience == null || (job.getRequirements() != null
-                        && job.getRequirements().toLowerCase().contains(experience.toLowerCase())))
+                .filter(job -> filterExperience == null
+                        || (job.getRequirements() != null
+                                && job.getRequirements().toLowerCase().contains(filterExperience)))
                 .filter(job -> remoteOnly == null || !remoteOnly
-                        || (job.getLocation() != null && job.getLocation().toLowerCase().contains("remote")))
+                        || (job.getLocation() != null
+                                && job.getLocation().toLowerCase().replaceAll("\\s+", "").contains("remote")))
                 .collect(Collectors.toList());
         List<JobResponseDTO> jobDTOs = filtered.stream()
                 .map(job -> mapToResponseDTO(job, user))
